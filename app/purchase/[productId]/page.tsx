@@ -1,194 +1,113 @@
 'use client';
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import ConsumerHeader from '@/components/layout/ConsumerHeader';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useCartStore } from '@/lib/stores/cart-store';
+const PRODUCTS: Record<string, { name: string; price: number; credit: number; bonus: number; type: string; warning?: string }> = {
+  'claude-50': { name: 'Claude API 入门版', price: 50, credit: 50, bonus: 0, type: 'claude' },
+  'claude-200': { name: 'Claude API 标准版', price: 200, credit: 220, bonus: 10, type: 'claude' },
+  'claude-500': { name: 'Claude API 进阶版', price: 500, credit: 575, bonus: 15, type: 'claude' },
+  'claude-2000': { name: 'Claude API 企业版', price: 2000, credit: 2400, bonus: 20, type: 'claude' },
+  'gpt-plus': { name: 'GPT Plus 月卡', price: 99, credit: 0, bonus: 0, type: 'gpt', warning: '无质保、不退款、账号问题不负责' },
+};
 
-interface Package {
-  id: string;
-  name: string;
-  price: number;
-  features: string[];
-}
+export default function PurchasePage() {
+  const params = useParams();
+  const productId = params.productId as string;
+  const product = PRODUCTS[productId];
+  const [payMethod, setPayMethod] = useState('wechat');
+  const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
-const packages: Package[] = [
-  {
-    id: 'basic',
-    name: '基础版',
-    price: 49,
-    features: ['每月 10 万 tokens', '基础 API 调用', '邮件支持'],
-  },
-  {
-    id: 'pro',
-    name: '专业版',
-    price: 149,
-    features: ['每月 50 万 tokens', '高级 API 调用', '优先支持', '自定义模型'],
-  },
-  {
-    id: 'enterprise',
-    name: '企业版',
-    price: 499,
-    features: ['无限 tokens', '全部 API 功能', '7x24 专属支持', '私有部署'],
-  },
-];
-
-export default function PurchasePage({ params }: { params: { productId: string } }) {
-  const router = useRouter();
-  const addItem = useCartStore((state) => state.addItem);
-  const [selectedPackage, setSelectedPackage] = useState<Package>(packages[0]);
-  const [quantity, setQuantity] = useState(1);
-  const [product, setProduct] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // 模拟获取商品详情
-    const fetchProduct = async () => {
-      try {
-        const res = await fetch(`/api/products/${params.productId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProduct(data);
-        } else {
-          // 使用模拟数据
-          setProduct({
-            id: params.productId,
-            title: 'Claude API 服务',
-            description: '强大的 AI 对话能力，支持多种应用场景',
-            image: '/placeholder-product.jpg',
-          });
-        }
-      } catch (error) {
-        // 使用模拟数据
-        setProduct({
-          id: params.productId,
-          title: 'Claude API 服务',
-          description: '强大的 AI 对话能力，支持多种应用场景',
-          image: '/placeholder-product.jpg',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [params.productId]);
-
-  const handleSubmit = () => {
-    addItem({
-      id: `${params.productId}-${selectedPackage.id}`,
-      productId: params.productId,
-      name: `${product?.title || 'Claude API'} - ${selectedPackage.name}`,
-      price: selectedPackage.price,
-      quantity,
-      packageType: selectedPackage.id,
-    });
-    router.push('/purchase/checkout');
-  };
-
-  if (loading) {
+  if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">加载中...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <div className="text-center">
+          <p style={{ color: 'var(--text-secondary)' }}>商品不存在</p>
+          <Link href="/products" className="btn-primary mt-4 inline-block">返回商品列表</Link>
+        </div>
       </div>
     );
   }
 
+  const handlePay = async () => {
+    if (product.warning && !agreed) { alert('请先确认免责声明'); return; }
+    setLoading(true);
+    // Mock 虎皮椒支付
+    setTimeout(() => {
+      alert('支付功能待接入虎皮椒，当前为演示模式。\n\n支付成功后将自动发放 API Key。');
+      setLoading(false);
+    }, 1500);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* 商品详情 */}
-          <div className="p-8 border-b">
-            <div className="flex gap-8">
-              <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                <span className="text-gray-400">商品图片</span>
-              </div>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                  {product?.title || 'Claude API 服务'}
-                </h1>
-                <p className="text-gray-600 mb-4">
-                  {product?.description || '强大的 AI 对话能力，支持多种应用场景'}
-                </p>
-                <div className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                  ¥{selectedPackage.price}/月
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <ConsumerHeader />
+      <div className="max-w-lg mx-auto px-4 py-12">
+        <Link href="/products" className="text-sm mb-6 inline-block" style={{ color: 'var(--text-tertiary)' }}>← 返回商品列表</Link>
+
+        <h1 className="text-xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>确认订单</h1>
+
+        <div className="card p-6 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{product.name}</div>
+              {product.type === 'claude' && (
+                <div className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  到账 ${product.credit} 额度
+                  {product.bonus > 0 && <span style={{ color: 'var(--success)' }}> (含赠送{product.bonus}%)</span>}
                 </div>
-              </div>
+              )}
+              {product.type === 'gpt' && (
+                <div className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>独立账号 · 30天有效</div>
+              )}
             </div>
+            <div className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>¥{product.price}</div>
           </div>
 
-          {/* 套餐选择 */}
-          <div className="p-8 border-b">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">选择套餐</h2>
-            <div className="grid grid-cols-3 gap-4">
-              {packages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  onClick={() => setSelectedPackage(pkg)}
-                  className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
-                    selectedPackage.id === pkg.id
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-200 hover:border-orange-300'
-                  }`}
-                >
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{pkg.name}</h3>
-                  <div className="text-2xl font-bold text-orange-500 mb-4">
-                    ¥{pkg.price}<span className="text-sm text-gray-500">/月</span>
-                  </div>
-                  <ul className="space-y-2">
-                    {pkg.features.map((feature, idx) => (
-                      <li key={idx} className="text-sm text-gray-600 flex items-start">
-                        <span className="text-orange-500 mr-2">✓</span>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+          {product.warning && (
+            <div className="p-3 rounded-lg mb-4 text-sm" style={{ backgroundColor: '#FDF4E0', color: 'var(--warning)' }}>
+              ⚠️ {product.warning}
             </div>
-          </div>
+          )}
 
-          {/* 数量选择 */}
-          <div className="p-8 border-b">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">购买数量</h2>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                -
-              </button>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-20 h-10 text-center border border-gray-300 rounded-lg"
-                min="1"
-              />
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                +
-              </button>
+          {product.type === 'claude' && (
+            <div className="text-xs p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-tertiary)' }}>
+              付款后自动发放 API Key + 接入地址 + 配置教程。按实际 API 调用扣费，支持退款（按剩余额度退）。
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* 订单金额 */}
-          <div className="p-8 bg-gray-50">
-            <div className="flex justify-between items-center mb-6">
-              <span className="text-lg text-gray-600">订单金额：</span>
-              <span className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                ¥{(selectedPackage.price * quantity).toFixed(2)}
-              </span>
-            </div>
-            <button
-              onClick={handleSubmit}
-              className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-bold text-lg hover:shadow-lg transition-shadow"
-            >
-              提交订单
-            </button>
+        {/* 支付方式 */}
+        <div className="card p-6 mb-4">
+          <h3 className="font-medium mb-3" style={{ color: 'var(--text-primary)' }}>支付方式</h3>
+          <div className="space-y-2">
+            {[{ id: 'wechat', label: '微信支付', icon: '💬' }, { id: 'alipay', label: '支付宝', icon: '🔵' }].map(m => (
+              <label key={m.id} className="flex items-center p-3 rounded-lg cursor-pointer border" style={{ borderColor: payMethod === m.id ? 'var(--accent)' : 'var(--border-light)', backgroundColor: payMethod === m.id ? 'var(--accent-light)' : 'transparent' }}>
+                <input type="radio" name="pay" value={m.id} checked={payMethod === m.id} onChange={() => setPayMethod(m.id)} className="mr-3" />
+                <span className="mr-2">{m.icon}</span>
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{m.label}</span>
+              </label>
+            ))}
           </div>
         </div>
+
+        {/* 免责确认 */}
+        {product.warning && (
+          <label className="flex items-start space-x-2 mb-4 cursor-pointer">
+            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="mt-1" />
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>我已知悉：{product.warning}</span>
+          </label>
+        )}
+
+        <button onClick={handlePay} disabled={loading || (!!product.warning && !agreed)} className="btn-primary w-full py-3 disabled:opacity-50">
+          {loading ? '处理中...' : `支付 ¥${product.price}`}
+        </button>
+
+        <p className="text-xs text-center mt-4" style={{ color: 'var(--text-tertiary)' }}>
+          支付由虎皮椒提供，支持微信/支付宝 · 费率 0.6%
+        </p>
       </div>
     </div>
   );

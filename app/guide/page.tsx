@@ -1,60 +1,146 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
+'use client'
+import { useState } from 'react'
+
+const promoterSteps = [
+  { step: 1, title: '注册推广员账号', desc: '在平台注册并申请推广员资格，审核通过后即可开始推广。' },
+  { step: 2, title: '生成专属推广链接', desc: '在推广员后台获取您的专属邀请码或推广链接。' },
+  { step: 3, title: '分享给潜在用户', desc: '将链接分享给朋友、粉丝或社群，引导他们注册购买。' },
+  { step: 4, title: '佣金自动入账', desc: '用户成功购买套餐后，佣金自动结算到您的账户，随时可申请提现。' },
+]
+
+const userSteps = [
+  { step: 1, title: '选择并购买套餐', desc: '在套餐页面选择合适的 Token 套餐，完成支付。' },
+  { step: 2, title: '获取 API Key', desc: '支付完成后，在「我的账户」页面获取您的专属 API Key。' },
+  { step: 3, title: '配置并开始使用', desc: '将 API Key 填入您的 AI 客户端，即可开始调用 Claude 模型。' },
+]
+
+const faqs = [
+  { q: '推广佣金比例是多少？', a: '普通推广员佣金为成交金额的 50%。若您有上级推广员，您获得 40%，上级永久抽成 10%。' },
+  { q: '提现最低金额是多少？', a: '最低提现金额为 ¥1，审核通过后 T+7 工作日到账。' },
+  { q: 'API Key 有使用限制吗？', a: '每个 Key 的使用量由您购买的套餐 Token 数决定，用完后可继续充值购买。' },
+  { q: '支持哪些 Claude 模型？', a: '目前支持 Claude 3.5 Sonnet、Claude 3 Opus、Claude 3 Haiku 等主流模型，具体以套餐说明为准。' },
+  { q: 'Token 会过期吗？', a: '购买的 Token 有效期为 1 年，请在有效期内使用。' },
+  { q: '如何查看我的推广收益？', a: '登录推广员后台，在「佣金明细」页面可查看所有历史收益和提现记录。' },
+]
+
+const openclawCode = `import anthropic
+
+client = anthropic.Anthropic(
+    api_key="YOUR_API_KEY",
+    base_url="https://api.tokencps.com",
+)
+
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": "Hello, Claude!"}
+    ],
+)
+print(message.content)`
+
+const officialCode = `import anthropic
+
+client = anthropic.Anthropic(
+    api_key="YOUR_OFFICIAL_API_KEY",
+)
+
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": "Hello, Claude!"}
+    ],
+)
+print(message.content)`
 
 export default function GuidePage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const steps = [
-    { icon: '📝', title: '注册账号', desc: '填写手机号和邮箱，1分钟完成注册，立即获得专属邀请码' },
-    { icon: '🔍', title: '选择商品', desc: '浏览商品库，选择高佣金、高转化的 Claude API 套餐进行推广' },
-    { icon: '🔗', title: '生成链接', desc: '一键生成专属推广链接，支持短链接和推广海报' },
-    { icon: '💰', title: '分享赚钱', desc: '分享链接到社群、朋友圈，用户下单后佣金实时到账' },
-  ];
-  const faqs = [
-    { q: '如何注册成为推广员？', a: '点击首页"立即注册"，填写手机号、邮箱和密码即可完成注册。注册后自动获得推广员身份和专属邀请码。' },
-    { q: '佣金比例是多少？', a: '基础佣金比例为50%，即用户通过你的链接购买后，你可获得订单金额50%的佣金。黄金及以上等级还有额外加成。' },
-    { q: '佣金什么时候到账？', a: '用户支付成功后佣金实时到账，订单确认完成后可申请提现。提现1-3个工作日到账。' },
-    { q: '最低提现金额是多少？', a: '最低提现金额为10元，支持支付宝、微信和银行卡提现，手续费1%。' },
-    { q: '如何提高推广转化率？', a: '1. 选择热门高佣金商品；2. 在精准社群分享；3. 使用平台提供的推广素材；4. 配合优惠活动推广。' },
-    { q: '邀请好友有什么奖励？', a: '邀请好友注册并完成首单，你可获得好友佣金的10%作为团队奖励，最多支持3级分销。' },
-    { q: '推广链接有效期多久？', a: '推广链接永久有效。用户点击链接后，30天内下单都会计入你的推广业绩。' },
-  ];
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm"><div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">TokenCPS联盟</Link>
-      </div></header>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-8 text-white text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">新手指南</h1>
-          <p className="text-orange-100">4步开启推广赚钱之旅</p>
+    <div style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh' }}>
+      <div className="max-w-3xl mx-auto px-4 py-12 space-y-12">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>使用指南</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>快速上手 TokenCPS，开始您的 AI 之旅</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          {steps.map((s, i) => (
-            <div key={i} className="card p-6 text-center relative">
-              {i < 3 && <div className="hidden md:block absolute top-1/2 -right-3 text-gray-300 text-2xl">→</div>}
-              <div className="text-4xl mb-3">{s.icon}</div>
-              <div className="text-sm text-orange-600 mb-1">Step {i + 1}</div>
-              <h3 className="font-bold mb-2">{s.title}</h3>
-              <p className="text-sm text-gray-600">{s.desc}</p>
+
+        {/* 推广员新手指南 */}
+        <section>
+          <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>推广员新手指南</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {promoterSteps.map(s => (
+              <div key={s.step} className="card p-6">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mb-3" style={{ backgroundColor: 'var(--accent)', color: '#fff' }}>{s.step}</div>
+                <h3 className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{s.title}</h3>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* C端使用教程 */}
+        <section>
+          <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>C 端用户教程</h2>
+          <div className="flex flex-col sm:flex-row gap-4">
+            {userSteps.map(s => (
+              <div key={s.step} className="card p-6 flex-1">
+                <div className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>0{s.step}</div>
+                <h3 className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{s.title}</h3>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* API 配置教程 */}
+        <section>
+          <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>API 配置教程</h2>
+          <div className="space-y-4">
+            <div className="card p-6">
+              <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>方式一：通过 TokenCPS 中转（推荐）</h3>
+              <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>使用平台 API Key + 中转地址，享受更低价格：</p>
+              <pre className="text-xs p-4 rounded-lg overflow-x-auto" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}><code>{openclawCode}</code></pre>
             </div>
-          ))}
-        </div>
-        <h2 className="text-xl font-bold mb-4">常见问题</h2>
-        <div className="space-y-2 mb-8">
-          {faqs.map((f, i) => (
-            <div key={i} className="card">
-              <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full px-6 py-4 flex items-center justify-between text-left">
-                <span className="font-medium">{f.q}</span>
-                <span className="text-gray-400">{openFaq === i ? '−' : '+'}</span>
-              </button>
-              {openFaq === i && <div className="px-6 pb-4 text-gray-600 text-sm">{f.a}</div>}
+            <div className="card p-6">
+              <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>方式二：Claude 官方 API</h3>
+              <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>直接使用官方 API Key（需自行购买）：</p>
+              <pre className="text-xs p-4 rounded-lg overflow-x-auto" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}><code>{officialCode}</code></pre>
             </div>
-          ))}
-        </div>
-        <div className="text-center"><Link href="/products" className="btn-primary px-12 py-4 text-lg">立即开始推广</Link></div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section>
+          <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>常见问题</h2>
+          <div className="space-y-2">
+            {faqs.map((faq, i) => (
+              <div key={i} className="card">
+                <button
+                  className="w-full text-left p-5 flex items-center justify-between"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{faq.q}</span>
+                  <span style={{ color: 'var(--accent)', fontSize: '1.2rem' }}>{openFaq === i ? '−' : '+'}</span>
+                </button>
+                {openFaq === i && (
+                  <div className="px-5 pb-5 text-sm" style={{ color: 'var(--text-secondary)' }}>{faq.a}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 底部 CTA */}
+        <section className="card p-8 text-center">
+          <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>准备好开始了吗？</h2>
+          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>立即注册成为推广员，分享 AI 的力量，轻松赚取佣金。</p>
+          <div className="flex gap-3 justify-center">
+            <a href="/register" className="btn-primary">立即注册</a>
+            <a href="/packages" className="btn-secondary">查看套餐</a>
+          </div>
+        </section>
       </div>
     </div>
-  );
+  )
 }

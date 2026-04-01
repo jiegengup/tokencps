@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import MobileNav from "@/components/layout/MobileNav";
 
 export const metadata: Metadata = {
-  title: "TokenCPS联盟 - 专业的CPS推广平台",
-  description: "TokenCPS联盟，让推广更简单，让收益更透明",
+  title: "TokenCPS - Claude API 人民币直充平台",
+  description: "Claude API / GPT Plus 官方授权分销平台，人民币直充，无需境外信用卡",
 };
 
 export default function RootLayout({
@@ -14,10 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body className="pb-16 md:pb-0">
-        {children}
-        <MobileNav />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -1,144 +1,104 @@
+'use client';
 import Link from 'next/link';
+import ConsumerHeader from '@/components/layout/ConsumerHeader';
+import ConsumerFooter from '@/components/layout/ConsumerFooter';
 
 export default function HomePage() {
+  const products = [
+    { id: 'claude-50', name: 'Claude API 入门版', desc: '¥50 → $50 额度', price: 50, bonus: '0%', tag: '' },
+    { id: 'claude-200', name: 'Claude API 标准版', desc: '¥200 → $220 额度', price: 200, bonus: '+10%', tag: '热门' },
+    { id: 'claude-500', name: 'Claude API 进阶版', desc: '¥500 → $575 额度', price: 500, bonus: '+15%', tag: '' },
+    { id: 'claude-2000', name: 'Claude API 企业版', desc: '¥2000 → $2400 额度', price: 2000, bonus: '+20%', tag: '最划算' },
+    { id: 'gpt-plus', name: 'GPT Plus 月卡', desc: '独立账号 · 30天有效', price: 99, bonus: '', tag: '' },
+  ];
+
   return (
-    <div className="min-h-screen">
-      {/* 顶部导航 */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                TokenCPS联盟
-              </h1>
-              <nav className="hidden md:flex space-x-6">
-                <Link href="/" className="text-gray-700 hover:text-orange-600">首页</Link>
-                <Link href="/products" className="text-gray-700 hover:text-orange-600">商品库</Link>
-                <Link href="/promotions" className="text-gray-700 hover:text-orange-600">推广管理</Link>
-                <Link href="/orders" className="text-gray-700 hover:text-orange-600">订单查询</Link>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/auth/login" className="text-gray-700 hover:text-orange-600">登录</Link>
-              <Link href="/auth/register" className="btn-primary">立即注册</Link>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <ConsumerHeader />
 
-      {/* Hero区域 */}
-      <section className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            让推广更简单，让收益更透明
-          </h2>
-          <p className="text-xl mb-8 text-orange-100">
-            加入TokenCPS联盟，开启您的推广赚钱之旅
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12">
+        <div className="max-w-2xl">
+          <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-4" style={{ color: 'var(--text-primary)' }}>
+            Claude API，<br />人民币直充
+          </h1>
+          <p className="text-lg mb-8" style={{ color: 'var(--text-secondary)' }}>
+            无需境外信用卡，¥1 = $1 使用额度。支持微信、支付宝付款，即买即用。
           </p>
-          <div className="flex justify-center space-x-4">
-            <Link href="/auth/register" className="bg-white text-orange-600 px-8 py-3 rounded-full font-medium hover:shadow-lg transition-all">
-              免费注册
+          <div className="flex items-center space-x-4">
+            <Link href="/products" className="btn-primary py-3 px-6">查看套餐</Link>
+            <Link href="/guide" className="btn-secondary py-3 px-6">使用教程</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 公告 */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mb-8">
+        <div className="card-flat p-4 flex items-center space-x-3">
+          <span className="badge badge-accent">公告</span>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            新用户注册即送 $5 Claude 体验额度，立即注册体验 →
+          </p>
+        </div>
+      </section>
+
+      {/* 商品列表 — 参考链动小店框架 */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mb-16">
+        <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>商品列表</h2>
+        <div className="space-y-3">
+          {products.map(p => (
+            <Link
+              key={p.id}
+              href={`/purchase/${p.id}`}
+              className="card flex items-center justify-between p-5 group cursor-pointer"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+                  style={{ backgroundColor: 'var(--accent-light)' }}>
+                  {p.id.startsWith('gpt') ? '🤖' : '⚡'}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{p.name}</span>
+                    {p.tag && <span className="badge badge-accent">{p.tag}</span>}
+                    {p.bonus && <span className="text-xs" style={{ color: 'var(--success)' }}>赠送{p.bonus}</span>}
+                  </div>
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{p.desc}</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <span className="text-xl font-bold" style={{ color: 'var(--accent)' }}>¥{p.price}</span>
+                <span className="text-sm opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--accent)' }}>购买 →</span>
+              </div>
             </Link>
-            <Link href="/products" className="bg-orange-600 text-white px-8 py-3 rounded-full font-medium hover:bg-orange-700 transition-all">
-              浏览商品
-            </Link>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* 数据展示 */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="stat-card text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">10,000+</div>
-              <div className="text-gray-600">注册推广员</div>
+      {/* 为什么选择我们 */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mb-16">
+        <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>为什么选择 TokenCPS</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { icon: '💰', title: '人民币直充', desc: '微信/支付宝付款，无需境外信用卡，无汇率损失' },
+            { icon: '⚡', title: '即买即用', desc: '付款后自动发放 API Key，配置教程一键跟着做' },
+            { icon: '🛡️', title: '稳定可靠', desc: '多货源保障，API 稳定性 99.9%，7×24 技术支持' },
+          ].map(f => (
+            <div key={f.title} className="card p-6">
+              <span className="text-2xl mb-3 block">{f.icon}</span>
+              <h3 className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>{f.title}</h3>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{f.desc}</p>
             </div>
-            <div className="stat-card text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">50,000+</div>
-              <div className="text-gray-600">推广商品</div>
-            </div>
-            <div className="stat-card text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">¥5000万+</div>
-              <div className="text-gray-600">累计佣金</div>
-            </div>
-            <div className="stat-card text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">98%</div>
-              <div className="text-gray-600">用户满意度</div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* 核心功能 */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h3 className="text-3xl font-bold text-center mb-12">核心功能</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="card p-6">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">🔗</span>
-              </div>
-              <h4 className="text-xl font-semibold mb-2">一键生成推广链接</h4>
-              <p className="text-gray-600">快速生成专属推广链接，支持多种分享方式</p>
-            </div>
-            <div className="card p-6">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">📊</span>
-              </div>
-              <h4 className="text-xl font-semibold mb-2">实时数据统计</h4>
-              <p className="text-gray-600">订单、佣金、转化率实时查看，数据透明</p>
-            </div>
-            <div className="card p-6">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">💰</span>
-              </div>
-              <h4 className="text-xl font-semibold mb-2">快速提现结算</h4>
-              <p className="text-gray-600">支持多种提现方式，T+1快速到账</p>
-            </div>
-          </div>
-        </div>
+      {/* 社交证明 */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mb-16 text-center">
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>已服务 <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>2,680+</span> 用户</p>
       </section>
 
-      {/* 页脚 */}
-      <footer className="bg-gray-800 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h5 className="font-semibold mb-4">关于我们</h5>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about">公司介绍</Link></li>
-                <li><Link href="/contact">联系我们</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4">帮助中心</h5>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/help">新手指南</Link></li>
-                <li><Link href="/faq">常见问题</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4">合作伙伴</h5>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/merchant">商家入驻</Link></li>
-                <li><Link href="/api">API文档</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4">关注我们</h5>
-              <div className="flex space-x-4">
-                <span className="text-2xl cursor-pointer">📱</span>
-                <span className="text-2xl cursor-pointer">💬</span>
-                <span className="text-2xl cursor-pointer">📧</span>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TokenCPS联盟. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <ConsumerFooter />
     </div>
   );
 }
