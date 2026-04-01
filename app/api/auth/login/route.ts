@@ -18,22 +18,37 @@ export async function POST(request: NextRequest) {
     }
 
     // TODO: 从数据库查询用户
-    // 这里使用 Mock 数据演示
-    const mockUser = {
-      id: '1',
-      phone: '13800138000',
-      email: 'demo@tokencps.com',
-      password: await bcrypt.hash('demo123', 10), // demo123
-      nickname: '推广达人',
-      role: 'user' as const,
-      status: 'active' as const,
-      inviteCode: 'DEMO001',
-      balance: 1580.50,
-      totalEarnings: 15680.00,
-    };
+    // Mock 用户数据（普通用户 + 管理员）
+    const mockUsers = [
+      {
+        id: '1',
+        phone: '13800138000',
+        email: 'demo@tokencps.com',
+        password: await bcrypt.hash('demo123', 10),
+        nickname: '推广达人',
+        role: 'user' as const,
+        status: 'active' as const,
+        inviteCode: 'DEMO001',
+        balance: 1580.50,
+        totalEarnings: 15680.00,
+      },
+      {
+        id: '0',
+        phone: '13800000000',
+        email: 'admin@tokencps.com',
+        password: await bcrypt.hash('admin888', 10),
+        nickname: '系统管理员',
+        role: 'admin' as const,
+        status: 'active' as const,
+        inviteCode: 'ADMIN001',
+        balance: 0,
+        totalEarnings: 0,
+      },
+    ];
 
     // 检查账号是否存在（手机号或邮箱）
-    if (account !== mockUser.phone && account !== mockUser.email) {
+    const mockUser = mockUsers.find(u => u.phone === account || u.email === account);
+    if (!mockUser) {
       return NextResponse.json(
         { success: false, message: '账号或密码错误' },
         { status: 401 }

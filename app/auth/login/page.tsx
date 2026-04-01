@@ -43,16 +43,16 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.username,
+          account: formData.username,
           password: formData.password,
         }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.success) {
         // 登录成功，保存 token 和用户信息
-        login(data.token, data.user);
+        login(data.data.token, data.data.user);
         router.push('/dashboard');
       } else {
         setError(data.message || '登录失败，请检查账号密码');

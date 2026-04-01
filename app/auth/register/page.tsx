@@ -111,9 +111,9 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           phone: formData.phone,
-          code: formData.code,
           email: formData.email,
           password: formData.password,
+          confirmPassword: formData.password,
           inviteCode: formData.inviteCode,
         }),
       });
