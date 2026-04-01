@@ -37,6 +37,7 @@ export const useAuthStore = create<AuthState>()(persist(
       set({ token: null, user: null, isLoggedIn: false });
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; max-age=0';
       }
     },
     updateUser: (data) => {

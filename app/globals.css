@@ -15,6 +15,13 @@ body {
   color: var(--text-dark);
 }
 
+/* 修复密码输入框显示问题 */
+input[type="password"] {
+  font-family: monospace;
+  letter-spacing: 0.125em;
+  font-size: 1rem;
+}
+
 /* 淘宝联盟风格按钮 */
 .btn-primary {
   background: linear-gradient(to right, rgb(249 115 22), rgb(239 68 68));

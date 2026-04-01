@@ -53,7 +53,11 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         // 登录成功，保存 token 和用户信息
         login(data.data.token, data.data.user);
-        router.push('/dashboard');
+        // 设置 cookie 供中间件验证
+        document.cookie = `token=${data.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        // 管理员跳转后台，普通用户跳转推广中心
+        const redirectTo = data.data.user.role === 'admin' ? '/admin' : '/dashboard';
+        router.push(redirectTo);
       } else {
         setError(data.message || '登录失败，请检查账号密码');
       }
