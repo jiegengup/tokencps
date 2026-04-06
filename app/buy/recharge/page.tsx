@@ -2,12 +2,7 @@
 import { useState } from 'react'
 import { Header } from '@/app/buy/components/Header'
 import { toast } from '@shared/components/Toast'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 const plans = [
   { price: 50, usd: 50, bonus: 0, label: '入门', desc: '适合体验和轻度使用' },

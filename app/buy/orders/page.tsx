@@ -3,12 +3,7 @@ import { useEffect, useState } from 'react'
 import { Header } from '@/app/buy/components/Header'
 import { Modal } from '@shared/components/Modal'
 import type { Order } from '@shared/index'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 const statusMap: Record<string, { label: string; cls: string }> = {
   pending: { label: '待支付', cls: 'bg-warning/10 text-warning' },

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card, Button } from '@shared/index'
+import { getCookie } from '@/lib/utils/cookie'
 
 const mainTabs = ['推广活动', '我的链接'] as const
 const filterTabs = ['全部', 'Claude', 'GPT', '其他'] as const
@@ -226,10 +227,4 @@ export default function PromotionsPage() {
       )}
     </div>
   )
-}
-
-function getCookie(name: string): string {
-  if (typeof document === 'undefined') return ''
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? match[2] : ''
 }

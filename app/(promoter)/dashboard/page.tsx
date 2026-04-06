@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Card, LineChart, Button } from '@shared/index'
 import { useAuthStore } from '@/lib/promoter/store'
+import { getCookie } from '@/lib/utils/cookie'
 
 function formatTime(iso: string) {
   const d = new Date(iso)
@@ -169,10 +170,4 @@ export default function DashboardPage() {
       </div>
     </div>
   )
-}
-
-function getCookie(name: string): string {
-  if (typeof document === 'undefined') return ''
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? match[2] : ''
 }

@@ -29,7 +29,7 @@
         "./*"
       ],
       "@shared/*": [
-        "./packages/shared/*"
+        "./lib/shared/*"
       ]
     }
   },

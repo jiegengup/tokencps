@@ -1,12 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 function statusStyle(status: string) {
   switch (status) {

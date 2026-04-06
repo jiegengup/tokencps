@@ -4,12 +4,7 @@ import { Header } from '@/app/buy/components/Header'
 import { toast } from '@shared/components/Toast'
 import { Modal } from '@shared/components/Modal'
 import type { APIKeyInfo } from '@shared/index'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 const API_ENDPOINT = '/api/v1'
 

@@ -5,12 +5,7 @@ import { Header } from '@/app/buy/components/Header'
 import { OnboardingModal } from '@/app/buy/components/OnboardingModal'
 import { useAuthStore, useDashboardStore } from '@/lib/consumer/store'
 import { toast } from '@shared/components/Toast'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 export default function DashboardPage() {
   const user = useAuthStore(s => s.user)

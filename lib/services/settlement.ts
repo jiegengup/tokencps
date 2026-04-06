@@ -1,8 +1,7 @@
 /**
  * 结算（提现）服务
  * 
- * TODO: 接入 PostgreSQL 后，替换为 v2 实体（packages/api/lib/entities/index.ts）
- * 当前 v1 实体已删除，此文件暂不可用，等数据库接入时重写 import。
+ * 已接入 PostgreSQL (Drizzle ORM)
  * 最低提现金额已修正为 ¥1（PRD 要求）。
  */
 

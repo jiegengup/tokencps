@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card, Button } from '@shared/index'
+import { getCookie } from '@/lib/utils/cookie'
 
 const tabs = ['我的团队', '我的客户'] as const
 
@@ -196,10 +197,4 @@ export default function TeamPage() {
       )}
     </div>
   )
-}
-
-function getCookie(name: string): string {
-  if (typeof document === 'undefined') return ''
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? match[2] : ''
 }

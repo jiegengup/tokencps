@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Card } from '@shared/index'
 import { useAuthStore } from '@/lib/promoter/store'
+import { getCookie } from '@/lib/utils/cookie'
 
 const menuItems = [
   { label: '实名认证', desc: '提现前需完成认证', href: '#', badgeText: '未认证', badgeColor: 'bg-orange-500' },
@@ -94,10 +95,4 @@ export default function ProfilePage() {
       </button>
     </div>
   )
-}
-
-function getCookie(name: string): string {
-  if (typeof document === 'undefined') return ''
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? match[2] : ''
 }

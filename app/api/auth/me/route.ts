@@ -6,16 +6,20 @@ import { eq } from 'drizzle-orm'
 import { ok, fail } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
-  const auth = await getAuthUser(request)
-  if (!auth) {
-    return NextResponse.json(fail('未登录'), { status: 401 })
-  }
+  try {
+    const auth = await getAuthUser(request)
+    if (!auth) {
+      return NextResponse.json(fail('未登录'), { status: 401 })
+    }
 
-  const [user] = await db.select().from(users).where(eq(users.id, auth.userId)).limit(1)
-  if (!user) {
-    return NextResponse.json(fail('用户不存在'), { status: 404 })
-  }
+    const [user] = await db.select().from(users).where(eq(users.id, auth.userId)).limit(1)
+    if (!user) {
+      return NextResponse.json(fail('用户不存在'), { status: 404 })
+    }
 
-  const { password: _, ...safeUser } = user
-  return NextResponse.json(ok(safeUser))
+    const { password: _, ...safeUser } = user
+    return NextResponse.json(ok(safeUser))
+  } catch (e: any) {
+    return NextResponse.json(fail("服务器内部错误"), { status: 500 })
+  }
 }

@@ -1,12 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 type Audience = '全部' | '推广员' | 'C端用户'
 type Status = '已发布' | '草稿' | '已下线'

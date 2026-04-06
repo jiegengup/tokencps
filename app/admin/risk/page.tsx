@@ -1,12 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 type RiskLevel = '高' | '中' | '低'
 type AlertStatus = '待处理' | '已处理'

@@ -1,12 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Header } from '@/app/buy/components/Header'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 interface UsageData {
   balance: number; totalUsed: number; remaining: number;

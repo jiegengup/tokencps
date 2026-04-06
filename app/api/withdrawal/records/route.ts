@@ -6,12 +6,16 @@ import { eq, desc } from 'drizzle-orm'
 import { ok, fail } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
-  const auth = await getAuthUser(request)
-  if (!auth) return NextResponse.json(fail('未登录'), { status: 401 })
+  try {
+    const auth = await getAuthUser(request)
+    if (!auth) return NextResponse.json(fail('未登录'), { status: 401 })
 
-  const records = await db.select().from(withdrawals)
-    .where(eq(withdrawals.userId, auth.userId))
-    .orderBy(desc(withdrawals.createdAt))
+    const records = await db.select().from(withdrawals)
+      .where(eq(withdrawals.userId, auth.userId))
+      .orderBy(desc(withdrawals.createdAt))
 
-  return NextResponse.json(ok(records))
+    return NextResponse.json(ok(records))
+  } catch (e: any) {
+    return NextResponse.json(fail("服务器内部错误"), { status: 500 })
+  }
 }

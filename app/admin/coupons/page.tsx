@@ -1,12 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return ""
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
-  return match ? match[2] : ""
-}
+import { getCookie } from '@/lib/utils/cookie'
 
 type CouponType = '满减' | '折扣' | '固定金额'
 type CouponStatus = '生效中' | '已过期' | '未开始'

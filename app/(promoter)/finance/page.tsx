@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react'
 import { Card, Button, Modal } from '@shared/index'
+import { getCookie } from '@/lib/utils/cookie'
 
 type Tab = 'commissions' | 'withdrawals'
 type CommissionFilter = 'all' | 'estimated' | 'confirmed' | 'clawback' | 'team'
 
 const typeBadge: Record<string, { label: string; cls: string }> = {
-  estimated: { label: '预估佣金', cls: 'bg-blue-50 text-blue-600' },
+  estimated: { label: '待确认', cls: 'bg-blue-50 text-blue-600' },
   confirmed: { label: '实际佣金', cls: 'bg-emerald-50 text-emerald-600' },
   clawback: { label: '佣金追回', cls: 'bg-red-50 text-red-600' },
   team: { label: '团队抽成', cls: 'bg-purple-50 text-purple-600' },
@@ -27,7 +28,7 @@ function fmtDate(iso: string) {
 
 const filters: { key: CommissionFilter; label: string }[] = [
   { key: 'all', label: '全部' },
-  { key: 'estimated', label: '预估佣金' },
+  { key: 'estimated', label: '待确认' },
   { key: 'confirmed', label: '实际佣金' },
   { key: 'clawback', label: '佣金追回' },
   { key: 'team', label: '团队抽成' },
@@ -232,10 +233,4 @@ export default function FinancePage() {
       </Modal>
     </div>
   )
-}
-
-function getCookie(name: string): string {
-  if (typeof document === 'undefined') return ''
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? match[2] : ''
 }
