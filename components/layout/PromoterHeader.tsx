@@ -20,7 +20,7 @@ export default function PromoterHeader() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center space-x-4">
-            <Link href="/promoter" className="font-bold" style={{ color: 'var(--text-primary)' }}>
+            <Link href="/dashboard" className="font-bold" style={{ color: 'var(--text-primary)' }}>
               TokenCPS <span className="text-xs font-normal" style={{ color: 'var(--text-tertiary)' }}>推广中心</span>
             </Link>
             {/* 导航 — PC */}

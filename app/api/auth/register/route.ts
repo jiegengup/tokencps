@@ -1,90 +1,68 @@
-import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { generateInviteCode, validateEmail, validatePhone, validatePassword } from '@/lib/utils';
+import { NextRequest, NextResponse } from 'next/server'
+import { hashSync } from 'bcryptjs'
+import { db } from '@/lib/db'
+import { users, promotionLinks, referrals } from '@/lib/db/schema'
+import { eq, sql } from 'drizzle-orm'
+import { signToken } from '@/lib/middleware/auth'
+import { ok, fail } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { phone, email, password, confirmPassword, inviteCode } = body;
+    const body = await request.json()
+    const { account, password, nickname, type = 'consumer' } = body
 
-    // 验证必填字段
-    if (!phone || !email || !password || !confirmPassword) {
-      return NextResponse.json(
-        { success: false, message: '请填写完整信息' },
-        { status: 400 }
-      );
+    if (!account || !password) {
+      return NextResponse.json(fail('账号和密码不能为空'), { status: 400 })
     }
 
-    // 验证手机号
-    if (!validatePhone(phone)) {
-      return NextResponse.json(
-        { success: false, message: '手机号格式不正确' },
-        { status: 400 }
-      );
+    if (password.length < 6) {
+      return NextResponse.json(fail('密码至少6位'), { status: 400 })
     }
 
-    // 验证邮箱
-    if (!validateEmail(email)) {
-      return NextResponse.json(
-        { success: false, message: '邮箱格式不正确' },
-        { status: 400 }
-      );
+    const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.account, account)).limit(1)
+    if (existing) {
+      return NextResponse.json(fail('账号已存在'), { status: 409 })
     }
 
-    // 验证密码
-    if (!validatePassword(password)) {
-      return NextResponse.json(
-        { success: false, message: '密码长度应为6-20位' },
-        { status: 400 }
-      );
-    }
+    const role = type === 'promoter' ? 'promoter' : 'consumer'
+    const refCode = request.nextUrl.searchParams.get('ref')
 
-    // 验证密码一致性
-    if (password !== confirmPassword) {
-      return NextResponse.json(
-        { success: false, message: '两次密码输入不一致' },
-        { status: 400 }
-      );
-    }
+    const result = await db.transaction(async (tx) => {
+      let parentId: string | null = null
 
-    // TODO: 检查手机号和邮箱是否已存在（需要数据库）
-    
-    // 加密密码
-    const hashedPassword = await bcrypt.hash(password, 10);
+      if (refCode) {
+        const [link] = await tx.select().from(promotionLinks).where(eq(promotionLinks.code, refCode)).limit(1)
+        if (link) {
+          parentId = link.userId
+          await tx.update(promotionLinks).set({ registrations: sql`${promotionLinks.registrations} + 1` }).where(eq(promotionLinks.id, link.id))
+        }
+      }
 
-    // 生成邀请码
-    const userInviteCode = generateInviteCode();
+      const [newUser] = await tx.insert(users).values({
+        account,
+        password: hashSync(password, 10),
+        nickname: nickname || account,
+        role,
+        balance: role === 'consumer' ? '5' : '0',
+        parentId,
+      }).returning()
 
-    // TODO: 保存到数据库
-    const newUser = {
-      id: Math.random().toString(36).substring(7),
-      phone,
-      email,
-      password: hashedPassword,
-      inviteCode: userInviteCode,
-      invitedBy: inviteCode || null,
-      role: 'user' as const,
-      status: 'active' as const,
-      balance: 0,
-      totalEarnings: 0,
-      createdAt: new Date(),
-    };
+      if (parentId) {
+        await tx.insert(referrals).values({
+          inviterId: parentId,
+          inviteeId: newUser.id,
+          inviteeRole: role,
+        })
+      }
 
-    return NextResponse.json({
-      success: true,
-      message: '注册成功',
-      data: {
-        id: newUser.id,
-        phone: newUser.phone,
-        email: newUser.email,
-        inviteCode: newUser.inviteCode,
-      },
-    });
-  } catch (error) {
-    console.error('注册失败:', error);
-    return NextResponse.json(
-      { success: false, message: '注册失败，请稍后重试' },
-      { status: 500 }
-    );
+      return newUser
+    })
+
+    const token = await signToken({ userId: result.id, role: result.role })
+    const { password: _, ...safeUser } = result
+
+    return NextResponse.json(ok({ user: safeUser, token }), { status: 201 })
+  } catch {
+    return NextResponse.json(fail('注册失败'), { status: 500 })
   }
 }

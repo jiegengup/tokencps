@@ -1,45 +1,47 @@
-import ConsumerHeader from '@/components/layout/ConsumerHeader';
-import ConsumerFooter from '@/components/layout/ConsumerFooter';
+import Link from 'next/link'
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <ConsumerHeader />
-      <div className="max-w-3xl mx-auto px-4 py-12">
-        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>用户服务协议</h1>
-        <p className="text-sm mb-8" style={{ color: 'var(--text-tertiary)' }}>最后更新：2026年4月1日</p>
-        <div className="card p-8 space-y-6 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          <section>
-            <h2 className="font-semibold text-base mb-2" style={{ color: 'var(--text-primary)' }}>一、服务说明</h2>
-            <p>TokenCPS（以下简称"平台"）是一个 Claude API 和 GPT Plus 的分销服务平台。平台为用户提供 API 额度充值、API Key 管理等服务。用户通过平台购买的 API 额度，可用于调用 Claude 等 AI 模型。</p>
-          </section>
-          <section>
-            <h2 className="font-semibold text-base mb-2" style={{ color: 'var(--text-primary)' }}>二、账户注册</h2>
-            <p>用户需提供真实有效的邮箱或手机号注册账户。每个用户仅可注册一个账户。用户应妥善保管账户密码，因密码泄露导致的损失由用户自行承担。</p>
-          </section>
-          <section>
-            <h2 className="font-semibold text-base mb-2" style={{ color: 'var(--text-primary)' }}>三、充值与退款</h2>
-            <p>用户充值后，资金转化为美元额度存入账户。API 调用按实际使用量扣费。用户可申请退款，退款金额按剩余未使用额度计算，已使用部分不予退还。退款将在 3-5 个工作日内原路返回。</p>
-          </section>
-          <section>
-            <h2 className="font-semibold text-base mb-2" style={{ color: 'var(--text-primary)' }}>四、GPT Plus 特别条款</h2>
-            <p className="font-semibold" style={{ color: 'var(--danger)' }}>GPT Plus 月卡账号为第三方账号，平台不提供任何质量保证。购买后不支持退款，账号出现任何问题（包括但不限于封号、降级、无法登录）平台不承担责任。购买即表示用户知悉并接受以上条款。</p>
-          </section>
-          <section>
-            <h2 className="font-semibold text-base mb-2" style={{ color: 'var(--text-primary)' }}>五、知识产权</h2>
-            <p>平台的所有内容（包括但不限于文字、图片、代码、界面设计）均受知识产权法保护。未经授权，用户不得复制、修改或分发平台内容。</p>
-          </section>
-          <section>
-            <h2 className="font-semibold text-base mb-2" style={{ color: 'var(--text-primary)' }}>六、免责条款</h2>
-            <p>平台不对 API 服务的持续可用性做绝对保证。因上游服务商（Anthropic、OpenAI）的政策变更、技术故障等不可控因素导致的服务中断，平台不承担赔偿责任，但会尽力协助用户处理。</p>
-          </section>
-          <section>
-            <h2 className="font-semibold text-base mb-2" style={{ color: 'var(--text-primary)' }}>七、协议修改</h2>
-            <p>平台有权根据业务需要修改本协议。修改后的协议将在平台公示，继续使用平台服务即视为接受修改后的协议。</p>
-          </section>
+    <div className="min-h-screen bg-[#FAF9F6]">
+      <header className="border-b border-[#E8E4DF] px-4 py-4">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <Link href="/" className="text-lg font-bold text-[#1A1A1A]">TokenCPS</Link>
+          <Link href="/" className="text-sm text-[#6B6560] hover:text-[#1A1A1A]">← 返回首页</Link>
         </div>
-      </div>
-      <ConsumerFooter />
+      </header>
+      <main className="max-w-3xl mx-auto px-4 py-12">
+        <h1 className="text-2xl font-bold text-[#1A1A1A] mb-8">用户服务协议</h1>
+        <div className="prose prose-sm text-[#3D3D3D] space-y-6">
+          <p className="text-sm text-[#9B9590]">最后更新：2026年4月1日</p>
+
+          <h2 className="text-lg font-semibold mt-8">一、服务说明</h2>
+          <p>TokenCPS（以下简称"平台"）是一个AI模型API推广联盟平台，为推广员提供推广分发服务，为消费者提供AI模型API购买服务。</p>
+
+          <h2 className="text-lg font-semibold mt-8">二、账号注册</h2>
+          <p>用户注册时应提供真实、准确的信息。每位用户仅可注册一个账号。平台有权对异常账号进行限制或封禁。</p>
+
+          <h2 className="text-lg font-semibold mt-8">三、服务内容</h2>
+          <p>平台提供以下服务：</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>AI模型API资源的推广与分发</li>
+            <li>推广佣金的计算与结算</li>
+            <li>AI模型API的购买与使用</li>
+            <li>推广数据的统计与分析</li>
+          </ul>
+
+          <h2 className="text-lg font-semibold mt-8">四、费用与结算</h2>
+          <p>推广佣金按照平台公示的佣金规则计算，T+7结算，最低提现金额为¥1。平台保留调整佣金规则的权利，调整前将提前通知。</p>
+
+          <h2 className="text-lg font-semibold mt-8">五、用户行为规范</h2>
+          <p>用户不得利用平台从事违法违规活动，不得通过技术手段刷单、作弊。违规行为将导致账号封禁及佣金扣除。</p>
+
+          <h2 className="text-lg font-semibold mt-8">六、免责声明</h2>
+          <p>平台不对第三方AI模型的服务质量、可用性做出保证。因不可抗力导致的服务中断，平台不承担责任。</p>
+
+          <h2 className="text-lg font-semibold mt-8">七、协议修改</h2>
+          <p>平台有权修改本协议，修改后的协议将在平台公示。继续使用平台服务即视为同意修改后的协议。</p>
+        </div>
+      </main>
     </div>
-  );
+  )
 }

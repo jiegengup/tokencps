@@ -14,8 +14,8 @@ export default function ConsumerFooter() {
           <div>
             <h4 className="font-medium text-sm mb-3" style={{ color: 'var(--text-primary)' }}>产品</h4>
             <div className="space-y-2">
-              <Link href="/products" className="block text-sm hover:underline" style={{ color: 'var(--text-secondary)' }}>Claude API 套餐</Link>
-              <Link href="/products" className="block text-sm hover:underline" style={{ color: 'var(--text-secondary)' }}>GPT Plus 月卡</Link>
+              <Link href="/buy/recharge" className="block text-sm hover:underline" style={{ color: 'var(--text-secondary)' }}>Claude API 套餐</Link>
+              <Link href="/buy/recharge" className="block text-sm hover:underline" style={{ color: 'var(--text-secondary)' }}>GPT Plus 月卡</Link>
             </div>
           </div>
           <div>
@@ -36,7 +36,7 @@ export default function ConsumerFooter() {
         <div className="divider my-8"></div>
         <div className="flex items-center justify-between text-xs" style={{ color: 'var(--text-tertiary)' }}>
           <span>© 2026 TokenCPS. All rights reserved.</span>
-          <Link href="/promoter" className="hover:underline" style={{ color: 'var(--accent)' }}>推广赚钱 →</Link>
+          <Link href="/auth/register" className="hover:underline" style={{ color: 'var(--accent)' }}>推广赚钱 →</Link>
         </div>
       </div>
     </footer>

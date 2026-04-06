@@ -1,0 +1,16 @@
+{
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/finance/page": "app/(dashboard)/finance/page.js",
+  "/(dashboard)/guide/page": "app/(dashboard)/guide/page.js",
+  "/(dashboard)/profile/calculator/page": "app/(dashboard)/profile/calculator/page.js",
+  "/(dashboard)/profile/materials/page": "app/(dashboard)/profile/materials/page.js",
+  "/(dashboard)/profile/notifications/page": "app/(dashboard)/profile/notifications/page.js",
+  "/(dashboard)/profile/page": "app/(dashboard)/profile/page.js",
+  "/(dashboard)/promotions/page": "app/(dashboard)/promotions/page.js",
+  "/(dashboard)/team/page": "app/(dashboard)/team/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/auth/login/page": "app/auth/login/page.js",
+  "/auth/register/page": "app/auth/register/page.js",
+  "/page": "app/page.js"
+}

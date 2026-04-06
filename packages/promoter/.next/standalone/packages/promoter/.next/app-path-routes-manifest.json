@@ -1,0 +1,16 @@
+{
+  "/(dashboard)/dashboard/page": "/dashboard",
+  "/(dashboard)/finance/page": "/finance",
+  "/(dashboard)/guide/page": "/guide",
+  "/(dashboard)/profile/calculator/page": "/profile/calculator",
+  "/(dashboard)/profile/materials/page": "/profile/materials",
+  "/(dashboard)/profile/notifications/page": "/profile/notifications",
+  "/(dashboard)/profile/page": "/profile",
+  "/(dashboard)/promotions/page": "/promotions",
+  "/(dashboard)/team/page": "/team",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/auth/login/page": "/auth/login",
+  "/auth/register/page": "/auth/register",
+  "/page": "/"
+}

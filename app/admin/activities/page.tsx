@@ -1,161 +1,288 @@
 'use client'
-import Link from 'next/link'
-import { useState } from 'react'
 
-const AdminNav = () => (
-  <nav style={{ backgroundColor: '#1A1A1A' }} className="px-6 py-3 flex items-center gap-6">
-    <span className="text-white font-bold text-lg mr-4">TokenCPS 管理后台</span>
-    <Link href="/admin" className="text-white hover:text-orange-300 text-sm">数据概览</Link>
-    <Link href="/admin/activities" className="text-white hover:text-orange-300 text-sm">活动管理</Link>
-    <Link href="/admin/withdrawals" className="text-white hover:text-orange-300 text-sm">提现审核</Link>
-    <Link href="/admin/users" className="text-white hover:text-orange-300 text-sm">用户管理</Link>
-    <Link href="/" className="text-gray-400 hover:text-white text-sm ml-auto">返回前台</Link>
-  </nav>
-)
+import React, { useState } from 'react'
 
 type Activity = {
   id: number
   name: string
-  source: string
-  costCny: string
-  costUsd: string
-  commission: number
-  status: '进行中' | '备用' | '已停止'
+  supplier: string
+  commission: string
+  parentCommission: string
+  description: string
+  online: boolean
+  participants: number
+  orders: number
+  status: '进行中' | '已结束' | '草稿'
+  createdAt: string
 }
 
-const initialActivities: Activity[] = [
-  { id: 1, name: 'Claude API 推广 (selao)', source: 'selao', costCny: '0.2', costUsd: '1', commission: 50, status: '进行中' },
-  { id: 2, name: 'Claude API 推广 (xinxu)', source: 'xinxu', costCny: '0.35', costUsd: '1', commission: 50, status: '备用' },
+const SUPPLIERS = ['Anthropic', 'OpenAI', 'Google', 'DeepSeek', '字节跳动', '阿里云'] as const
+
+const MOCK_ACTIVITIES: Activity[] = [
+  { id: 1, name: 'Claude API推广', supplier: 'Anthropic', commission: '15', parentCommission: '5', description: 'Claude API套餐推广活动', online: true, participants: 1280, orders: 3456, status: '进行中', createdAt: '2026-03-01' },
+  { id: 2, name: 'GPT Plus推广', supplier: 'OpenAI', commission: '12', parentCommission: '4', description: 'GPT Plus账号推广', online: true, participants: 960, orders: 2180, status: '进行中', createdAt: '2026-02-15' },
+  { id: 3, name: 'Gemini Pro推广', supplier: 'Google', commission: '10', parentCommission: '3', description: 'Gemini Pro推广活动', online: false, participants: 540, orders: 1120, status: '已结束', createdAt: '2026-01-20' },
+  { id: 4, name: 'DeepSeek推广', supplier: 'DeepSeek', commission: '18', parentCommission: '6', description: 'DeepSeek模型推广', online: true, participants: 720, orders: 1890, status: '进行中', createdAt: '2026-03-10' },
+  { id: 5, name: '豆包推广', supplier: '字节跳动', commission: '14', parentCommission: '4', description: '豆包大模型推广', online: false, participants: 310, orders: 680, status: '草稿', createdAt: '2026-03-20' },
+  { id: 6, name: '通义千问推广', supplier: '阿里云', commission: '13', parentCommission: '4', description: '通义千问推广活动', online: false, participants: 450, orders: 920, status: '已结束', createdAt: '2025-12-05' },
 ]
 
+const TABS = ['全部', '进行中', '已结束', '草稿'] as const
+
+type ModalForm = {
+  name: string
+  supplier: string
+  commission: string
+  parentCommission: string
+  description: string
+}
+
+const emptyForm: ModalForm = { name: '', supplier: 'Anthropic', commission: '', parentCommission: '', description: '' }
+
 export default function ActivitiesPage() {
-  const [activities, setActivities] = useState<Activity[]>(initialActivities)
+  const [activeTab, setActiveTab] = useState<string>('全部')
+  const [activities, setActivities] = useState<Activity[]>(MOCK_ACTIVITIES)
+  const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [editForm, setEditForm] = useState<Partial<Activity>>({})
-  const [showNew, setShowNew] = useState(false)
-  const [newForm, setNewForm] = useState<Partial<Activity>>({ commission: 50, status: '进行中' })
+  const [form, setForm] = useState<ModalForm>(emptyForm)
 
-  const startEdit = (a: Activity) => {
-    setEditingId(a.id)
-    setEditForm({ ...a })
+  const filtered = activeTab === '全部' ? activities : activities.filter(a => a.status === activeTab)
+
+  const toggleOnline = (id: number) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, online: !a.online } : a))
   }
 
-  const saveEdit = () => {
-    setActivities(prev => prev.map(a => a.id === editingId ? { ...a, ...editForm } as Activity : a))
+  const openCreate = () => {
     setEditingId(null)
+    setForm(emptyForm)
+    setModalOpen(true)
   }
 
-  const addNew = () => {
-    const id = Date.now()
-    setActivities(prev => [...prev, { id, name: newForm.name || '新活动', source: newForm.source || '', costCny: newForm.costCny || '0', costUsd: newForm.costUsd || '1', commission: newForm.commission || 50, status: newForm.status as Activity['status'] || '备用' }])
-    setShowNew(false)
-    setNewForm({ commission: 50, status: '进行中' })
+  const openEdit = (activity: Activity) => {
+    setEditingId(activity.id)
+    setForm({
+      name: activity.name,
+      supplier: activity.supplier,
+      commission: activity.commission,
+      parentCommission: activity.parentCommission,
+      description: activity.description,
+    })
+    setModalOpen(true)
   }
 
-  const statusColors: Record<string, string> = {
-    '进行中': 'badge badge-accent',
-    '备用': 'badge',
-    '已停止': 'badge',
+  const handleSave = () => {
+    if (!form.name || !form.commission || !form.parentCommission) return
+    if (editingId !== null) {
+      setActivities(prev => prev.map(a => a.id === editingId ? {
+        ...a, name: form.name, supplier: form.supplier,
+        commission: form.commission, parentCommission: form.parentCommission,
+        description: form.description,
+      } : a))
+    } else {
+      const newActivity: Activity = {
+        id: Date.now(), name: form.name, supplier: form.supplier,
+        commission: form.commission, parentCommission: form.parentCommission,
+        description: form.description, online: false, participants: 0,
+        orders: 0, status: '草稿', createdAt: new Date().toISOString().slice(0, 10),
+      }
+      setActivities(prev => [newActivity, ...prev])
+    }
+    setModalOpen(false)
+  }
+
+  const statusBadge = (status: Activity['status']) => {
+    const map = {
+      '进行中': 'bg-success-light text-success',
+      '已结束': 'bg-bg-secondary text-text-tertiary',
+      '草稿': 'bg-warning-light text-warning',
+    }
+    return map[status]
   }
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh' }}>
-      <AdminNav />
-      <div className="p-8 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>活动-货源管理</h1>
-          <button className="btn-primary" onClick={() => setShowNew(true)}>+ 新建活动</button>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-text">活动管理</h1>
+        <button onClick={openCreate} className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-[--radius-sm] transition-colors">
+          + 创建活动
+        </button>
+      </div>
 
-        <div className="card p-0 overflow-hidden mb-6">
-          <div className="p-4 border-b" style={{ backgroundColor: '#F5F0E8' }}>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>⚠️ 货源名称和成本信息仅管理员可见，推广员不可见</p>
+      {/* Filter Tabs */}
+      <div className="flex gap-1 bg-bg-secondary p-1 rounded-[--radius-sm] w-fit">
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-1.5 text-sm rounded-[--radius-sm] transition-colors ${
+              activeTab === tab
+                ? 'bg-card text-text font-medium shadow-sm'
+                : 'text-text-secondary hover:text-text'
+            }`}
+          >
+            {tab}
+            {tab !== '全部' && (
+              <span className="ml-1.5 text-xs text-text-tertiary">
+                {activities.filter(a => a.status === tab).length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Activity Cards */}
+      <div className="grid gap-4">
+        {filtered.map(activity => (
+          <div key={activity.id} className="bg-card border border-border-light rounded-[--radius-md] p-5 hover:shadow-sm transition-shadow">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-3">
+                  <h3 className="text-base font-semibold text-text">{activity.name}</h3>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusBadge(activity.status)}`}>
+                    {activity.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-2 text-sm">
+                  <div>
+                    <span className="text-text-tertiary">货源</span>
+                    <p className="text-text font-medium">{activity.supplier}</p>
+                  </div>
+                  <div>
+                    <span className="text-text-tertiary">佣金比例</span>
+                    <p className="text-accent font-semibold">{activity.commission}%</p>
+                  </div>
+                  <div>
+                    <span className="text-text-tertiary">参与人数</span>
+                    <p className="text-text font-medium">{activity.participants.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="text-text-tertiary">总订单</span>
+                    <p className="text-text font-medium">{activity.orders.toLocaleString()}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-text-tertiary mt-3">创建时间: {activity.createdAt}</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col items-end gap-2 ml-6 shrink-0">
+                <span className="text-xs text-text-tertiary">{activity.online ? '已上线' : '已下线'}</span>
+                <button
+                  onClick={() => toggleOnline(activity.id)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${
+                    activity.online ? 'bg-success' : 'bg-border'
+                  }`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    activity.online ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+                <button
+                  onClick={() => openEdit(activity)}
+                  className="mt-1 px-3 py-1 text-xs text-accent border border-border-light rounded-[--radius-sm] hover:bg-hover transition-colors"
+                >
+                  编辑
+                </button>
+              </div>
+            </div>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ color: 'var(--text-secondary)', backgroundColor: '#F9F8F4' }} className="border-b">
-                <th className="text-left px-6 py-3">活动名称</th>
-                <th className="text-left px-6 py-3">货源（内部）</th>
-                <th className="text-left px-6 py-3">成本（内部）</th>
-                <th className="text-left px-6 py-3">佣金比例</th>
-                <th className="text-left px-6 py-3">状态</th>
-                <th className="text-left px-6 py-3">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activities.map(a => (
-                <tr key={a.id} className="border-b" style={{ color: 'var(--text-primary)' }}>
-                  {editingId === a.id ? (
-                    <>
-                      <td className="px-6 py-3"><input className="input text-sm" value={editForm.name || ''} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} /></td>
-                      <td className="px-6 py-3"><input className="input text-sm w-24" value={editForm.source || ''} onChange={e => setEditForm(f => ({ ...f, source: e.target.value }))} /></td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-1">
-                          <span>¥</span><input className="input text-sm w-16" value={editForm.costCny || ''} onChange={e => setEditForm(f => ({ ...f, costCny: e.target.value }))} />
-                          <span>=</span><span>$</span><input className="input text-sm w-12" value={editForm.costUsd || ''} onChange={e => setEditForm(f => ({ ...f, costUsd: e.target.value }))} />
-                        </div>
-                      </td>
-                      <td className="px-6 py-3"><input className="input text-sm w-20" type="number" value={editForm.commission || 0} onChange={e => setEditForm(f => ({ ...f, commission: Number(e.target.value) }))} /></td>
-                      <td className="px-6 py-3">
-                        <select className="input text-sm" value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as Activity['status'] }))}>
-                          <option>进行中</option><option>备用</option><option>已停止</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-3 flex gap-2">
-                        <button className="btn-primary text-xs" onClick={saveEdit}>保存</button>
-                        <button className="btn-secondary text-xs" onClick={() => setEditingId(null)}>取消</button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-6 py-3 font-medium">{a.name}</td>
-                      <td className="px-6 py-3"><span className="font-mono text-xs px-2 py-1 rounded" style={{ backgroundColor: '#F0EBE0', color: 'var(--accent)' }}>{a.source}</span></td>
-                      <td className="px-6 py-3 font-mono text-xs">¥{a.costCny} = ${a.costUsd}</td>
-                      <td className="px-6 py-3">{a.commission}%</td>
-                      <td className="px-6 py-3"><span className={statusColors[a.status]}>{a.status}</span></td>
-                      <td className="px-6 py-3"><button className="btn-secondary text-xs" onClick={() => startEdit(a)}>编辑</button></td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        ))}
+      </div>
 
-        {showNew && (
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>新建活动</h2>
-            <div className="grid grid-cols-2 gap-4">
+      {filtered.length === 0 && (
+        <div className="text-center py-16 text-text-tertiary text-sm">
+          暂无活动数据
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setModalOpen(false)} />
+          <div className="relative bg-card border border-border-light rounded-[--radius-md] shadow-xl w-full max-w-lg mx-4 p-6">
+            <h2 className="text-lg font-bold text-text mb-5">
+              {editingId !== null ? '编辑活动' : '创建活动'}
+            </h2>
+            <div className="space-y-4">
+              {/* 活动名称 */}
               <div>
-                <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>活动名称</label>
-                <input className="input w-full" value={newForm.name || ''} onChange={e => setNewForm(f => ({ ...f, name: e.target.value }))} placeholder="活动名称" />
+                <label className="block text-sm text-text-secondary mb-1">活动名称</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="请输入活动名称"
+                  className="w-full px-3 py-2 text-sm text-text bg-bg border border-border rounded-[--radius-sm] outline-none focus:border-accent transition-colors"
+                />
               </div>
+              {/* 货源 */}
               <div>
-                <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>货源（内部）</label>
-                <input className="input w-full" value={newForm.source || ''} onChange={e => setNewForm(f => ({ ...f, source: e.target.value }))} placeholder="如 selao" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>成本 ¥/每$1</label>
-                <input className="input w-full" value={newForm.costCny || ''} onChange={e => setNewForm(f => ({ ...f, costCny: e.target.value }))} placeholder="0.2" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>佣金比例 %</label>
-                <input className="input w-full" type="number" value={newForm.commission || 50} onChange={e => setNewForm(f => ({ ...f, commission: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>状态</label>
-                <select className="input w-full" value={newForm.status} onChange={e => setNewForm(f => ({ ...f, status: e.target.value as Activity['status'] }))}>
-                  <option>进行中</option><option>备用</option><option>已停止</option>
+                <label className="block text-sm text-text-secondary mb-1">货源</label>
+                <select
+                  value={form.supplier}
+                  onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm text-text bg-bg border border-border rounded-[--radius-sm] outline-none focus:border-accent transition-colors"
+                >
+                  {SUPPLIERS.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
+              {/* 佣金比例 + 上级抽成 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-text-secondary mb-1">佣金比例(%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={form.commission}
+                    onChange={e => setForm(f => ({ ...f, commission: e.target.value }))}
+                    placeholder="如 15"
+                    className="w-full px-3 py-2 text-sm text-text bg-bg border border-border rounded-[--radius-sm] outline-none focus:border-accent transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-text-secondary mb-1">上级抽成比例(%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={form.parentCommission}
+                    onChange={e => setForm(f => ({ ...f, parentCommission: e.target.value }))}
+                    placeholder="如 5"
+                    className="w-full px-3 py-2 text-sm text-text bg-bg border border-border rounded-[--radius-sm] outline-none focus:border-accent transition-colors"
+                  />
+                </div>
+              </div>
+              {/* 活动描述 */}
+              <div>
+                <label className="block text-sm text-text-secondary mb-1">活动描述</label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="请输入活动描述"
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm text-text bg-bg border border-border rounded-[--radius-sm] outline-none focus:border-accent transition-colors resize-none"
+                />
+              </div>
             </div>
-            <div className="flex gap-3 mt-4">
-              <button className="btn-primary" onClick={addNew}>创建</button>
-              <button className="btn-secondary" onClick={() => setShowNew(false)}>取消</button>
+            {/* Buttons */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 text-sm text-text-secondary border border-border rounded-[--radius-sm] hover:bg-hover transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 text-sm bg-accent hover:bg-accent-hover text-white font-medium rounded-[--radius-sm] transition-colors"
+              >
+                {editingId !== null ? '保存修改' : '创建'}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(dashboard)/layout,_N_T_/(dashboard)/profile/layout,_N_T_/(dashboard)/profile/materials/layout,_N_T_/(dashboard)/profile/materials/page,_N_T_/profile/materials"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KGRhc2hib2FyZCk/profile/materials/__PAGE__",
+    "/!KGRhc2hib2FyZCk/profile/materials",
+    "/!KGRhc2hib2FyZCk/profile",
+    "/!KGRhc2hib2FyZCk",
+    "/_index",
+    "/_head"
+  ]
+}

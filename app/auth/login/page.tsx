@@ -1,79 +1,65 @@
-'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuthStore } from '@/lib/stores/auth-store';
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useAuthStore } from '@/lib/promoter/store'
 
 export default function LoginPage() {
-  const router = useRouter();
-  const login = useAuthStore((state) => state.login);
-  const [formData, setFormData] = useState({ account: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const router = useRouter()
+  const { login } = useAuthStore()
+  const [account, setAccount] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!formData.account.trim()) { setError('请输入手机号或邮箱'); return; }
-    if (!formData.password || formData.password.length < 6) { setError('密码长度不能少于6位'); return; }
-
-    setLoading(true);
+    e.preventDefault()
+    if (!account || !password) return setError('请填写账号和密码')
+    setError('')
+    setLoading(true)
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: formData.account, password: formData.password }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        login(data.data.token, data.data.user);
-        document.cookie = `token=${data.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-        const redirectTo = data.data.user.role === 'admin' ? '/admin' : '/promoter';
-        router.push(redirectTo);
-      } else {
-        setError(data.message || '登录失败');
+      const ok = await login(account, password)
+      if (ok) {
+        const { user } = useAuthStore.getState()
+        if (user?.role === 'admin') router.push('/admin')
+        else router.push('/dashboard')
       }
-    } catch { setError('网络错误'); }
-    finally { setLoading(false); }
-  };
+      else setError('账号或密码错误')
+    } catch { setError('登录失败，请重试') }
+    finally { setLoading(false) }
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div className="w-full max-w-sm mx-4">
+    <div className="min-h-screen bg-cream flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>TokenCPS</Link>
-          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>登录你的账户</p>
+          <h1 className="text-3xl font-bold text-text tracking-tight">TokenCPS</h1>
         </div>
-
-        <div className="card p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: '#FCEAEA', color: 'var(--danger)' }}>{error}</div>}
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>手机号 / 邮箱</label>
-              <input type="text" value={formData.account} onChange={e => setFormData({ ...formData, account: e.target.value })}
-                className="input" placeholder="请输入手机号或邮箱" disabled={loading} />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>密码</label>
-              <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className="input" placeholder="请输入密码" disabled={loading} />
-            </div>
-
-            <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 disabled:opacity-50">
-              {loading ? '登录中...' : '登录'}
-            </button>
-          </form>
-        </div>
-
-        <div className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-          还没有账户？
-          <Link href="/auth/register" className="ml-1 font-medium" style={{ color: 'var(--accent)' }}>注册购买</Link>
-          <span className="mx-2">·</span>
-          <Link href="/auth/register-promoter" className="font-medium" style={{ color: 'var(--accent)' }}>成为推广员</Link>
+        <form onSubmit={handleSubmit} className="bg-card rounded-[12px] border border-border p-6 space-y-4">
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <input
+            type="text" placeholder="账号" value={account}
+            onChange={e => setAccount(e.target.value)}
+            className="w-full px-4 py-3 rounded-[12px] border border-border bg-cream text-text placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-accent/30"
+          />
+          <input
+            type="password" placeholder="密码" value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="w-full px-4 py-3 rounded-[12px] border border-border bg-cream text-text placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-accent/30"
+          />
+          <button
+            type="submit" disabled={loading}
+            className="w-full py-3 bg-accent text-white font-medium rounded-[12px] hover:opacity-90 transition disabled:opacity-50"
+          >
+            {loading ? '登录中...' : '登录'}
+          </button>
+        </form>
+        <div className="mt-6 text-center text-sm text-text/60 space-y-2">
+          <p>还没有账号？<Link href="/auth/register" className="text-accent hover:underline">立即注册</Link></p>
+          <p><Link href="/" className="hover:underline">← 返回首页</Link></p>
         </div>
       </div>
     </div>
-  );
+  )
 }

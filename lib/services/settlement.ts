@@ -1,7 +1,13 @@
-import { AppDataSource } from '../db/data-source';
-import { User } from '../db/entities/User.entity';
-import { Withdrawal } from '../db/entities/Withdrawal.entity';
-import { Transaction, TransactionType } from '../db/entities/Transaction.entity';
+/**
+ * 结算（提现）服务
+ * 
+ * TODO: 接入 PostgreSQL 后，替换为 v2 实体（packages/api/lib/entities/index.ts）
+ * 当前 v1 实体已删除，此文件暂不可用，等数据库接入时重写 import。
+ * 最低提现金额已修正为 ¥1（PRD 要求）。
+ */
+
+// v1 imports 已删除，接数据库时用 v2 实体替换：
+// import { User, Withdrawal, Commission } from '@/packages/api/lib/entities';
 import { LessThan, MoreThanOrEqual } from 'typeorm';
 
 /**
@@ -38,9 +44,9 @@ export async function processSettlement(
     }
 
     // 最小提现金额检查
-    if (amount < 10) {
+    if (amount < 1) {
       await queryRunner.rollbackTransaction();
-      return { success: false, message: 'Minimum withdrawal amount is 10' };
+      return { success: false, message: 'Minimum withdrawal amount is ¥1' };
     }
 
     // 扣除余额

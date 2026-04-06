@@ -22,9 +22,14 @@
         "name": "next"
       }
     ],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@shared/*": [
+        "./packages/shared/*"
       ]
     }
   },
@@ -36,6 +41,10 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "packages/api",
+    "packages/admin",
+    "packages/consumer",
+    "packages/promoter"
   ]
 }

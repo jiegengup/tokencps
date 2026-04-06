@@ -11,7 +11,8 @@ interface ReferralMember {
 }
 
 // 等级佣金分成比例
-const LEVEL_RATES = { 1: 0.50, 2: 0.10, 3: 0.05 };
+// PRD 只定义2级分销（推广员+上级），不要加第3级
+const LEVEL_RATES: Record<number, number> = { 1: 0.50, 2: 0.10 };
 
 export function createReferral(userId: string, parentId: string) {
   console.log(`[分销] 建立推荐关系: ${parentId} → ${userId}`);

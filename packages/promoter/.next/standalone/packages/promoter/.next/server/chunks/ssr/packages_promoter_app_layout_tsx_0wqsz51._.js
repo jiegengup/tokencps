@@ -1,0 +1,3 @@
+module.exports=[32357,a=>{"use strict";var b=a.i(7997);a.s(["default",0,function({children:a}){return(0,b.jsx)("html",{lang:"zh-CN",children:(0,b.jsx)("body",{className:"min-h-screen bg-cream text-text antialiased",children:a})})},"metadata",0,{title:"TokenCPS - AI模型推广联盟",description:"一站式接入全球AI顶级模型，推广赚佣金"},"viewport",0,{width:"device-width",initialScale:1,maximumScale:1}])},56545,a=>{a.n(a.i(32357))}];
+
+//# sourceMappingURL=packages_promoter_app_layout_tsx_0wqsz51._.js.map

@@ -42,5 +42,5 @@ export function validateEmail(email: string): boolean {
 
 // 验证密码强度
 export function validatePassword(password: string): boolean {
-  return password.length >= 6 && password.length <= 20;
+  return password.length >= 1 && password.length <= 50;
 }

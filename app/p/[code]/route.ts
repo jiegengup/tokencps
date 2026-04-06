@@ -4,30 +4,34 @@ import { checkClickFraud } from '@/lib/services/risk-control';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const { code } = params;
+    const { code } = await params;
 
     const ip = request.headers.get('x-forwarded-for') ||
                request.headers.get('x-real-ip') ||
                'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
+    // 构建正确的外部 URL（通过反代时使用 Host header）
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    const host = request.headers.get('host') || 'token.aiwuyi.top';
+    const baseUrl = `${proto}://${host}`;
+
     // 风控检查
     const fraudCheck = checkClickFraud(ip, code);
     if (!fraudCheck.allowed) {
       console.warn(`[风控] 点击被拦截: ${fraudCheck.reason}`);
-      // 仍然重定向，但不记录有效点击
-      return NextResponse.redirect(new URL('/products', request.url), { status: 302 });
+      return NextResponse.redirect(new URL('/buy', baseUrl), { status: 302 });
     }
 
     // 记录点击
     recordClick(code, ip, userAgent);
 
-    // 设置追踪 Cookie（30天有效期）并重定向到商品页
+    // 设置追踪 Cookie（30天有效期）并重定向到C端落地页
     const response = NextResponse.redirect(
-      new URL(`/products?ref=${code}`, request.url),
+      new URL(`/buy?ref=${code}`, baseUrl),
       { status: 302 }
     );
 
@@ -41,6 +45,6 @@ export async function GET(
     return response;
   } catch (error) {
     console.error('推广链接跳转失败:', error);
-    return NextResponse.redirect(new URL('/products', request.url), { status: 302 });
+    return NextResponse.redirect(new URL('/buy', 'https://token.aiwuyi.top'), { status: 302 });
   }
 }

@@ -127,7 +127,7 @@ export default function Header({ isLoggedIn, user, currentPath }: HeaderProps) {
                       个人中心
                     </Link>
                     <Link
-                      href="/orders"
+                      href="/finance"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       我的订单
@@ -139,7 +139,7 @@ export default function Header({ isLoggedIn, user, currentPath }: HeaderProps) {
                       推广管理
                     </Link>
                     <Link
-                      href="/withdrawal"
+                      href="/finance"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       提现
@@ -260,7 +260,7 @@ export default function Header({ isLoggedIn, user, currentPath }: HeaderProps) {
                   个人中心
                 </Link>
                 <Link
-                  href="/orders"
+                  href="/finance"
                   className="block py-2 text-gray-700"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -274,7 +274,7 @@ export default function Header({ isLoggedIn, user, currentPath }: HeaderProps) {
                   推广管理
                 </Link>
                 <Link
-                  href="/withdrawal"
+                  href="/finance"
                   className="block py-2 text-gray-700"
                   onClick={() => setMobileMenuOpen(false)}
                 >

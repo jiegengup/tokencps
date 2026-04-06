@@ -41,7 +41,7 @@ export default function ConsumerHeader() {
           <div className="flex items-center space-x-3">
             {isLoggedIn ? (
               <>
-                <Link href="/account" className="nav-link hidden sm:block">我的账户</Link>
+                <Link href="/buy/settings" className="nav-link hidden sm:block">我的账户</Link>
                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{user?.nickname || user?.email}</span>
                 <button onClick={() => { logout(); window.location.href = '/'; }} className="btn-ghost text-sm py-1.5 px-3">退出</button>
               </>
