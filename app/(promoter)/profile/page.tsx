@@ -1,19 +1,16 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Card } from '@shared/index'
 import { useAuthStore } from '@/lib/promoter/store'
-import { mockNotifications } from '@/lib/promoter/mock-data'
-
-const unreadCount = mockNotifications.filter(n => !n.read).length
 
 const menuItems = [
   { label: '实名认证', desc: '提现前需完成认证', href: '#', badgeText: '未认证', badgeColor: 'bg-orange-500' },
   { label: '素材中心', desc: '朋友圈文案 / 海报 / 话术', href: '/profile/materials' },
   { label: '收益计算器', desc: '预估你的推广收入', href: '/profile/calculator' },
-  { label: '消息通知', desc: '系统消息与佣金提醒', href: '/profile/notifications', badge: unreadCount },
+  { label: '消息通知', desc: '系统消息与佣金提醒', href: '/profile/notifications' },
   { label: '帮助中心', desc: '常见问题与使用指南', href: '/guide' },
   { label: '推广员合作协议', desc: '权利与义务说明', href: '/promoter-agreement' },
 ]
@@ -27,9 +24,28 @@ const Arrow = () => (
 export default function ProfilePage() {
   const { user, logout } = useAuthStore()
   const router = useRouter()
-  const initials = (user?.nickname || '推广').slice(0, 1)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    async function fetchNotifications() {
+      try {
+        const res = await fetch('/api/notifications?unread=true', {
+          headers: { 'Authorization': `Bearer ${getCookie('token')}` },
+        })
+        const data = await res.json()
+        if (data.success) setUnreadCount(data.data?.unreadCount || 0)
+      } catch {}
+    }
+    fetchNotifications()
+  }, [])
 
   const handleLogout = () => { logout(); router.push('/') }
+
+  const initials = (user?.nickname || '推广').slice(0, 1)
+  const itemsWithBadges = menuItems.map(item => {
+    if (item.label === '消息通知') return { ...item, badge: unreadCount }
+    return item
+  })
 
   return (
     <div className="space-y-5">
@@ -41,15 +57,14 @@ export default function ProfilePage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-lg font-semibold text-text truncate">{user?.nickname || '推广达人'}</p>
-            <p className="text-sm text-text-tertiary">{user?.account || 'demo_promoter'}</p>
-            <p className="text-xs text-accent mt-1">邀请码: TCPRO001</p>
+            <p className="text-sm text-text-tertiary">{user?.account || ''}</p>
           </div>
         </div>
       </Card>
 
       {/* Menu list */}
       <div className="space-y-2">
-        {menuItems.map((item) => {
+        {itemsWithBadges.map((item) => {
           const inner = (
             <Card key={item.label} className="cursor-pointer hover:bg-cream-dark transition-colors">
               <div className="flex items-center justify-between">
@@ -73,12 +88,16 @@ export default function ProfilePage() {
       </div>
 
       {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className="w-full py-3 text-sm text-danger bg-card rounded-[12px] border border-border hover:bg-cream-dark transition-colors"
-      >
+      <button onClick={handleLogout}
+        className="w-full py-3 text-sm text-danger bg-card rounded-[12px] border border-border hover:bg-cream-dark transition-colors">
         退出登录
       </button>
     </div>
   )
+}
+
+function getCookie(name: string): string {
+  if (typeof document === 'undefined') return ''
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+  return match ? match[2] : ''
 }

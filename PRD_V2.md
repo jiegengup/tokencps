@@ -28,7 +28,7 @@
       端
     </lark-td>
     <lark-td>
-      域名
+      当前访问地址
     </lark-td>
     <lark-td>
       定位
@@ -45,7 +45,7 @@
       推广员端
     </lark-td>
     <lark-td>
-      tokencps.com
+      http://58.87.69.241
     </lark-td>
     <lark-td>
       联盟推广后台
@@ -62,7 +62,7 @@
       C端
     </lark-td>
     <lark-td>
-      子域名（待定）
+      http://58.87.69.241/buy
     </lark-td>
     <lark-td>
       API 购买平台
@@ -79,7 +79,7 @@
       后端 API
     </lark-td>
     <lark-td>
-      api.tokencps.com
+      同域 API（/api/*）
     </lark-td>
     <lark-td>
       统一后端
@@ -94,6 +94,8 @@
 </lark-table>
 
 品牌统一叫 **TokenCPS**。
+
+> 说明：tokenlianmeng.com / tokenlianmeng.cn 已规划，但因备案未完成，当前阶段统一以 IP 地址部署和联调。
 ### 3.2 两个注册入口
 - 推广员注册页：tokencps.com/register（教推广流程）✅ https://token.aiwuyi.top/auth/register-promoter
 - C端注册页：落地页上的注册（教购买和配置 API）✅ https://token.aiwuyi.top/auth/register
@@ -459,7 +461,7 @@
 - 自动带推广员二维码
 - 显示"已有 XXX 人通过此链接购买"（社交证明）
 - 支持一键分享到微信/朋友圈
-## 九、支付体系 ⏳ 待接入 — 虎皮椒支付需要账号配置，购买确认页已Mock完成 https://token.aiwuyi.top/purchase/checkout
+## 九、支付体系 ✅ 已接入 — 彩豆易支付（彩虹易支付协议）
 
 <lark-table rows="5" cols="2" header-row="true" column-widths="350,350">
 
@@ -476,7 +478,7 @@
       支付渠道
     </lark-td>
     <lark-td>
-      虎皮椒（个人，微信+支付宝）⏳ 待接入
+      彩豆易支付（微信+支付宝）✅ 已接入
     </lark-td>
   </lark-tr>
   <lark-tr>
@@ -484,7 +486,7 @@
       费率
     </lark-td>
     <lark-td>
-      0.6%
+      以平台实际结算费率为准
     </lark-td>
   </lark-tr>
   <lark-tr>
@@ -492,7 +494,7 @@
       资质
     </lark-td>
     <lark-td>
-      个人身份证即可
+      已有商户号 pid=10574
     </lark-td>
   </lark-tr>
   <lark-tr>
@@ -500,7 +502,7 @@
       到账
     </lark-td>
     <lark-td>
-      T+1
+      按平台结算周期
     </lark-td>
   </lark-tr>
 </lark-table>
@@ -880,7 +882,7 @@
   </lark-tr>
 </lark-table>
 
-### 待接入（需要凭证/配置）
+### 待接入（需要继续开发）
 
 <lark-table rows="5" cols="3" header-row="true" column-widths="244,244,244">
 
@@ -897,35 +899,35 @@
   </lark-tr>
   <lark-tr>
     <lark-td>
-      虎皮椒支付
+      真实货源 API（selao/xinxu）
     </lark-td>
     <lark-td>
       ⏳ 待接入
     </lark-td>
     <lark-td>
-      需要虎皮椒账号
+      当前仍为 mock/占位，需完成自动发放 API Key
     </lark-td>
   </lark-tr>
   <lark-tr>
     <lark-td>
-      PostgreSQL 数据库
+      推广员端真实数据联调
     </lark-td>
     <lark-td>
-      ⏳ 待接入
+      ⏳ 进行中
     </lark-td>
     <lark-td>
-      需要连接信息
+      当前部分页面仍使用 mock 数据，需切到真实 API
     </lark-td>
   </lark-tr>
   <lark-tr>
     <lark-td>
-      实际货源 API（selao/xinxu）
+      GPT Plus 交付链路
     </lark-td>
     <lark-td>
       ⏳ 待接入
     </lark-td>
     <lark-td>
-      需要 API 对接文档
+      账号采购/导入/售后流程未完成
     </lark-td>
   </lark-tr>
   <lark-tr>
@@ -1796,7 +1798,7 @@ tokencps/
 - Next.js 16 + TypeScript + TailwindCSS v4
 - UI 风格：Claude.ai（米白/浅棕背景、大量留白、圆角卡片、简洁字体）
 - 状态管理：Zustand
-- 后端：Next.js API Routes + TypeORM + PostgreSQL（Mock先行）
+- 后端：Next.js API Routes + Drizzle ORM + PostgreSQL
 - 支付：虎皮椒（个人，微信+支付宝）
 ---
 
