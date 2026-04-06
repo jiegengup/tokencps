@@ -1,6 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 type Audience = '全部' | '推广员' | 'C端用户'
 type Status = '已发布' | '草稿' | '已下线'
@@ -15,14 +21,6 @@ interface Announcement {
   status: Status
   publishedAt: string
 }
-
-const MOCK_ANNOUNCEMENTS: Announcement[] = [
-  { id: 'A10001', title: '平台佣金规则升级通知', content: '自2026年4月起，平台佣金规则将进行全面升级，详情请查看佣金说明页面。', audience: '推广员', pinned: true, status: '已发布', publishedAt: '2026-03-28 10:00' },
-  { id: 'A10002', title: '五一促销活动即将开启', content: '五一期间全场套餐享受8折优惠，推广员佣金比例同步提升。', audience: '全部', pinned: false, status: '已发布', publishedAt: '2026-03-25 14:30' },
-  { id: 'A10003', title: '新用户注册赠送优惠券', content: '新注册用户将自动获得一张满100减20优惠券。', audience: 'C端用户', pinned: false, status: '草稿', publishedAt: '-' },
-  { id: 'A10004', title: '系统维护公告（3月20日）', content: '系统将于3月20日凌晨2:00-6:00进行维护升级，届时服务将暂停。', audience: '全部', pinned: false, status: '已下线', publishedAt: '2026-03-18 09:00' },
-  { id: 'A10005', title: '推广员等级制度说明', content: '推广员等级分为初级、中级、高级三档，不同等级享受不同佣金比例。', audience: '推广员', pinned: false, status: '已发布', publishedAt: '2026-03-10 16:00' },
-]
 
 const TABS: Tab[] = ['全部', '已发布', '草稿', '已下线']
 const AUDIENCES: Audience[] = ['全部', '推广员', 'C端用户']
@@ -50,10 +48,20 @@ const emptyForm: ModalForm = { title: '', content: '', audience: '全部', pinne
 
 export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('全部')
-  const [announcements, setAnnouncements] = useState(MOCK_ANNOUNCEMENTS)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<ModalForm>(emptyForm)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/announcements', {
+      headers: { Authorization: 'Bearer ' + getCookie('token') },
+    })
+      .then(res => res.json())
+      .then(json => setAnnouncements(json.data || json || []))
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = announcements.filter((a) => {
     if (activeTab === '全部') return true
@@ -72,18 +80,28 @@ export default function AnnouncementsPage() {
     setModalOpen(true)
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.title.trim()) return
     if (editingId) {
       setAnnouncements((prev) =>
         prev.map((a) => a.id === editingId ? { ...a, ...form } : a)
       )
     } else {
-      const newId = `A${10000 + announcements.length + 1}`
-      setAnnouncements((prev) => [
-        { id: newId, ...form, status: '草稿' as Status, publishedAt: '-' },
-        ...prev,
-      ])
+      try {
+        const res = await fetch('/api/admin/announcements', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + getCookie('token'),
+          },
+          body: JSON.stringify(form),
+        })
+        const json = await res.json()
+        if (res.ok) {
+          const newItem: Announcement = json.data || json
+          setAnnouncements((prev) => [newItem, ...prev])
+        }
+      } catch {}
     }
     setModalOpen(false)
   }
@@ -123,52 +141,56 @@ export default function AnnouncementsPage() {
       {/* Table */}
       <div className="bg-card border border-border-light rounded-[--radius-md] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-light bg-bg-secondary/50">
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">标题</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">目标受众</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">发布时间</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-12 text-text-tertiary">暂无公告</td>
+          {loading ? (
+            <div className="py-12 text-center text-text-tertiary">加载中...</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-light bg-bg-secondary/50">
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">标题</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">目标受众</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">发布时间</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
                 </tr>
-              ) : (
-                filtered.map((a) => (
-                  <tr key={a.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
-                    <td className="px-4 py-3 text-text font-medium">
-                      {a.pinned && <span className="text-xs text-accent mr-1">[置顶]</span>}
-                      {a.title}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${audienceStyle[a.audience]}`}>
-                        {a.audience}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${statusStyle[a.status]}`}>
-                        {a.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">{a.publishedAt}</td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => openEdit(a)} className="px-2 py-1 text-xs text-accent hover:bg-accent-light rounded-[--radius-sm] transition-colors">编辑</button>
-                        {a.status === '已发布' && (
-                          <button className="px-2 py-1 text-xs text-danger hover:bg-danger-light rounded-[--radius-sm] transition-colors">下线</button>
-                        )}
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-12 text-text-tertiary">暂无公告</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filtered.map((a) => (
+                    <tr key={a.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
+                      <td className="px-4 py-3 text-text font-medium">
+                        {a.pinned && <span className="text-xs text-accent mr-1">[置顶]</span>}
+                        {a.title}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${audienceStyle[a.audience]}`}>
+                          {a.audience}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${statusStyle[a.status]}`}>
+                          {a.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">{a.publishedAt}</td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => openEdit(a)} className="px-2 py-1 text-xs text-accent hover:bg-accent-light rounded-[--radius-sm] transition-colors">编辑</button>
+                          {a.status === '已发布' && (
+                            <button className="px-2 py-1 text-xs text-danger hover:bg-danger-light rounded-[--radius-sm] transition-colors">下线</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

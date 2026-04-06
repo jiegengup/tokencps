@@ -16,7 +16,7 @@ export async function GET(
 
     // 构建正确的外部 URL（通过反代时使用 Host header）
     const proto = request.headers.get('x-forwarded-proto') || 'https';
-    const host = request.headers.get('host') || 'token.aiwuyi.top';
+    const host = request.headers.get('host') || '58.87.69.241';
     const baseUrl = `${proto}://${host}`;
 
     // 风控检查
@@ -45,6 +45,6 @@ export async function GET(
     return response;
   } catch (error) {
     console.error('推广链接跳转失败:', error);
-    return NextResponse.redirect(new URL('/buy', 'https://token.aiwuyi.top'), { status: 302 });
+    return NextResponse.redirect(new URL('/buy', 'https://58.87.69.241'), { status: 302 });
   }
 }

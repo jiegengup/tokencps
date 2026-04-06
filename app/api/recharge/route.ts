@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }).returning()
 
     // 生成真实支付 URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://tokenlianmeng.cn'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://58.87.69.241'
     const paymentUrl = createPayUrl({
       orderId: order.id,
       amount: finalAmount,

@@ -1,6 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 type Period = 'today' | 'week' | 'month' | 'quarter'
 
@@ -10,27 +16,6 @@ const PERIODS: { key: Period; label: string }[] = [
   { key: 'month', label: '本月' },
   { key: 'quarter', label: '本季度' },
 ]
-
-const MONTHLY_DATA = [
-  { month: '2025-11', income: 48500, commission: 9700, withdrawal: 6200, other: 1800 },
-  { month: '2025-12', income: 62300, commission: 12460, withdrawal: 8100, other: 2100 },
-  { month: '2026-01', income: 55800, commission: 11160, withdrawal: 7500, other: 1950 },
-  { month: '2026-02', income: 71200, commission: 14240, withdrawal: 9800, other: 2400 },
-  { month: '2026-03', income: 83600, commission: 16720, withdrawal: 11200, other: 2800 },
-  { month: '2026-04', income: 12580, commission: 2516, withdrawal: 1800, other: 450 },
-]
-
-const SUMMARY_BY_PERIOD: Record<Period, {
-  income: number
-  commission: number
-  withdrawal: number
-  other: number
-}> = {
-  today: { income: 12580, commission: 2516, withdrawal: 1800, other: 450 },
-  week: { income: 38200, commission: 7640, withdrawal: 5100, other: 1200 },
-  month: { income: 83600, commission: 16720, withdrawal: 11200, other: 2800 },
-  quarter: { income: 167380, commission: 33476, withdrawal: 22500, other: 5650 },
-}
 
 function fmt(n: number) {
   return '¥' + n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -43,6 +28,29 @@ function pct(a: number, b: number) {
 
 export default function FinancePage() {
   const [period, setPeriod] = useState<Period>('month')
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/finance', {
+      headers: { Authorization: 'Bearer ' + getCookie('token') },
+    })
+      .then(res => res.json())
+      .then(json => setData(json))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="flex items-center justify-center py-24 text-text-tertiary">加载中...</div>
+  if (!data) return <div className="flex items-center justify-center py-24 text-danger">加载失败</div>
+
+  const MONTHLY_DATA = data.monthlyData || []
+  const SUMMARY_BY_PERIOD: Record<Period, any> = data.summaryByPeriod || {
+    today: { income: 0, commission: 0, withdrawal: 0, other: 0 },
+    week: { income: 0, commission: 0, withdrawal: 0, other: 0 },
+    month: { income: 0, commission: 0, withdrawal: 0, other: 0 },
+    quarter: { income: 0, commission: 0, withdrawal: 0, other: 0 },
+  }
+
   const s = SUMMARY_BY_PERIOD[period]
   const totalExpense = s.commission + s.withdrawal + s.other
   const profit = s.income - totalExpense
@@ -110,7 +118,7 @@ export default function FinancePage() {
             </tr>
           </thead>
           <tbody>
-            {MONTHLY_DATA.map(row => {
+            {MONTHLY_DATA.map((row: any) => {
               const rowProfit = row.income - row.commission - row.withdrawal - row.other
               return (
                 <tr key={row.month} className="border-b border-border-light last:border-0 hover:bg-hover transition-colors">
@@ -130,19 +138,19 @@ export default function FinancePage() {
             <tr className="bg-hover border-t border-border">
               <td className="px-4 py-3 text-text font-semibold">合计</td>
               <td className="px-4 py-3 text-right text-text font-semibold">
-                {fmt(MONTHLY_DATA.reduce((s, r) => s + r.income, 0))}
+                {fmt(MONTHLY_DATA.reduce((s: number, r: any) => s + r.income, 0))}
               </td>
               <td className="px-4 py-3 text-right text-text-secondary font-medium">
-                {fmt(MONTHLY_DATA.reduce((s, r) => s + r.commission, 0))}
+                {fmt(MONTHLY_DATA.reduce((s: number, r: any) => s + r.commission, 0))}
               </td>
               <td className="px-4 py-3 text-right text-text-secondary font-medium">
-                {fmt(MONTHLY_DATA.reduce((s, r) => s + r.withdrawal, 0))}
+                {fmt(MONTHLY_DATA.reduce((s: number, r: any) => s + r.withdrawal, 0))}
               </td>
               <td className="px-4 py-3 text-right text-text-secondary font-medium">
-                {fmt(MONTHLY_DATA.reduce((s, r) => s + r.other, 0))}
+                {fmt(MONTHLY_DATA.reduce((s: number, r: any) => s + r.other, 0))}
               </td>
               <td className="px-4 py-3 text-right text-success font-semibold">
-                {fmt(MONTHLY_DATA.reduce((s, r) => s + r.income - r.commission - r.withdrawal - r.other, 0))}
+                {fmt(MONTHLY_DATA.reduce((s: number, r: any) => s + r.income - r.commission - r.withdrawal - r.other, 0))}
               </td>
             </tr>
           </tfoot>

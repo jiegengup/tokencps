@@ -3,7 +3,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/consumer/store'
-import { api } from '@/lib/consumer/mock-api'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 export default function LoginPage() {
   const [account, setAccount] = useState('')
@@ -18,9 +23,17 @@ export default function LoginPage() {
     if (!account || !password) { setError('请填写账号和密码'); return }
     setLoading(true); setError('')
     try {
-      const res = await api.auth.login(account, password)
-      login(res.user, res.token)
-      router.push('/buy/dashboard')
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account, password }),
+      })
+      const data = await res.json()
+      if (data.success && data.data) {
+        login(data.data.user, data.data.token)
+        document.cookie = `token=${data.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
+        router.push('/buy/dashboard')
+      } else { setError(data.message || '登录失败') }
     } catch { setError('登录失败，请重试') }
     finally { setLoading(false) }
   }

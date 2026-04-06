@@ -4,8 +4,13 @@ import Link from 'next/link'
 import { Header } from '@/app/buy/components/Header'
 import { OnboardingModal } from '@/app/buy/components/OnboardingModal'
 import { useAuthStore, useDashboardStore } from '@/lib/consumer/store'
-import { api, mockDailyUsage } from '@/lib/consumer/mock-api'
 import { toast } from '@shared/components/Toast'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 export default function DashboardPage() {
   const user = useAuthStore(s => s.user)
@@ -13,8 +18,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([api.dashboard.get(), api.keys.list()]).then(([d, k]) => {
-      setData(d); setKeys(k); setLoading(false)
+    const token = getCookie('token')
+    const headers = { 'Authorization': `Bearer ${token}` }
+    Promise.all([
+      fetch('/api/dashboard/consumer', { headers }).then(r => r.json()),
+      fetch('/api/keys', { headers }).then(r => r.json()),
+    ]).then(([dRes, kRes]) => {
+      if (dRes.success) setData(dRes.data)
+      if (kRes.success) setKeys(kRes.data)
+      setLoading(false)
     })
   }, [setData, setKeys])
 
@@ -71,8 +83,6 @@ function NewUserDashboard() {
 
 function ReturningDashboard({ data, keys }: { data: import('@shared/index').ConsumerDashboard; keys: import('@shared/index').APIKeyInfo[] }) {
   const copyKey = (key: string) => { navigator.clipboard.writeText(key); toast('已复制到剪贴板', 'success') }
-  const recent7 = mockDailyUsage.slice(-7)
-  const maxCost = Math.max(...recent7.map(d => d.cost))
 
   return (
     <>
@@ -99,19 +109,6 @@ function ReturningDashboard({ data, keys }: { data: import('@shared/index').Cons
           <div><span className="text-text-tertiary">已使用</span> <span className="text-text font-medium">${data.totalUsed.toFixed(2)}</span></div>
           <div><span className="text-text-tertiary">累计充值</span> <span className="text-text font-medium">${data.totalRecharge}</span></div>
           <div><span className="text-text-tertiary">订单数</span> <span className="text-text font-medium">{data.totalOrders}</span></div>
-        </div>
-        {/* Mini chart */}
-        <div className="mt-4 pt-4 border-t border-border-light">
-          <div className="text-xs text-text-tertiary mb-2">近 7 天消耗趋势</div>
-          <div className="flex items-end gap-1 h-12">
-            {recent7.map((d, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full bg-accent/20 rounded-sm" style={{ height: `${(d.cost / maxCost) * 40}px` }}>
-                  <div className="w-full bg-accent rounded-sm" style={{ height: '100%' }} />
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 

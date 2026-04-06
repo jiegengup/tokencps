@@ -2,7 +2,12 @@
 import { useState } from 'react'
 import { Header } from '@/app/buy/components/Header'
 import { toast } from '@shared/components/Toast'
-import { api } from '@/lib/consumer/mock-api'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 const plans = [
   { price: 50, usd: 50, bonus: 0, label: '入门', desc: '适合体验和轻度使用' },
@@ -23,8 +28,15 @@ export default function RechargePage() {
   const handlePay = async () => {
     setLoading(true)
     try {
-      const res = await api.recharge.create(selected, channel, coupon || undefined)
-      toast(`订单创建成功！到账 $${res.amountUSD}`, 'success')
+      const res = await fetch('/api/recharge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('token')}` },
+        body: JSON.stringify({ amountCNY: selected, channel, coupon: coupon || undefined }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast(`订单创建成功！到账 $${data.data.amountUSD}`, 'success')
+      } else { toast(data.message || '支付失败', 'error') }
     } catch { toast('支付失败，请重试', 'error') }
     finally { setLoading(false) }
   }

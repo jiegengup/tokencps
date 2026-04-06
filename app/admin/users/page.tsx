@@ -1,6 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 type Role = '推广员' | 'C端用户'
 type Status = '正常' | '已封禁'
@@ -16,24 +22,24 @@ interface User {
   status: Status
 }
 
-const MOCK_USERS: User[] = [
-  { id: 'U10001', nickname: '张三丰', role: '推广员', registeredAt: '2025-11-02', orders: 34, totalSpent: 12800, status: '正常' },
-  { id: 'U10002', nickname: '李小龙', role: 'C端用户', registeredAt: '2025-12-15', orders: 5, totalSpent: 1990, status: '正常' },
-  { id: 'U10003', nickname: '王大锤', role: '推广员', registeredAt: '2026-01-08', orders: 21, totalSpent: 8750, status: '正常' },
-  { id: 'U10004', nickname: '赵敏敏', role: 'C端用户', registeredAt: '2026-01-20', orders: 2, totalSpent: 499, status: '已封禁' },
-  { id: 'U10005', nickname: '孙悟空', role: '推广员', registeredAt: '2026-02-03', orders: 47, totalSpent: 21300, status: '正常' },
-  { id: 'U10006', nickname: '周芷若', role: 'C端用户', registeredAt: '2026-02-14', orders: 8, totalSpent: 3200, status: '正常' },
-  { id: 'U10007', nickname: '陈大文', role: 'C端用户', registeredAt: '2026-03-01', orders: 0, totalSpent: 0, status: '已封禁' },
-  { id: 'U10008', nickname: '刘备备', role: '推广员', registeredAt: '2026-03-18', orders: 12, totalSpent: 5600, status: '正常' },
-]
-
 const TABS: Tab[] = ['全部', '推广员', 'C端用户', '已封禁']
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<Tab>('全部')
   const [search, setSearch] = useState('')
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = MOCK_USERS.filter((u) => {
+  useEffect(() => {
+    fetch('/api/admin/users', {
+      headers: { Authorization: 'Bearer ' + getCookie('token') },
+    })
+      .then(res => res.json())
+      .then(json => setUsers(json.data || json || []))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = users.filter((u) => {
     if (activeTab === '推广员' && u.role !== '推广员') return false
     if (activeTab === 'C端用户' && u.role !== 'C端用户') return false
     if (activeTab === '已封禁' && u.status !== '已封禁') return false
@@ -74,68 +80,72 @@ export default function UsersPage() {
       {/* Table */}
       <div className="bg-card border border-border-light rounded-[--radius-md] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-light bg-bg-secondary/50">
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">用户ID</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">昵称</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">角色</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">注册时间</th>
-                <th className="text-right px-4 py-3 font-medium text-text-secondary">订单数</th>
-                <th className="text-right px-4 py-3 font-medium text-text-secondary">累计消费</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-12 text-text-tertiary">暂无匹配用户</td>
+          {loading ? (
+            <div className="py-12 text-center text-text-tertiary">加载中...</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-light bg-bg-secondary/50">
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">用户ID</th>
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">昵称</th>
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">角色</th>
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">注册时间</th>
+                  <th className="text-right px-4 py-3 font-medium text-text-secondary">订单数</th>
+                  <th className="text-right px-4 py-3 font-medium text-text-secondary">累计消费</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
                 </tr>
-              ) : (
-                filtered.map((u) => (
-                  <tr key={u.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-text-secondary">{u.id}</td>
-                    <td className="px-4 py-3 text-text font-medium">{u.nickname}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
-                        u.role === '推广员'
-                          ? 'bg-accent-light text-accent'
-                          : 'bg-info-light text-info'
-                      }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">{u.registeredAt}</td>
-                    <td className="px-4 py-3 text-right text-text">{u.orders}</td>
-                    <td className="px-4 py-3 text-right text-text">¥{u.totalSpent.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
-                        u.status === '正常'
-                          ? 'bg-success-light text-success'
-                          : 'bg-danger-light text-danger'
-                      }`}>
-                        {u.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button className="px-2 py-1 text-xs text-accent hover:bg-accent-light rounded-[--radius-sm] transition-colors">查看</button>
-                        <button className={`px-2 py-1 text-xs rounded-[--radius-sm] transition-colors ${
-                          u.status === '正常'
-                            ? 'text-danger hover:bg-danger-light'
-                            : 'text-success hover:bg-success-light'
-                        }`}>
-                          {u.status === '正常' ? '封禁' : '解封'}
-                        </button>
-                        <button className="px-2 py-1 text-xs text-text-secondary hover:bg-hover rounded-[--radius-sm] transition-colors">标签</button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-12 text-text-tertiary">暂无匹配用户</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filtered.map((u) => (
+                    <tr key={u.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-text-secondary">{u.id}</td>
+                      <td className="px-4 py-3 text-text font-medium">{u.nickname}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
+                          u.role === '推广员'
+                            ? 'bg-accent-light text-accent'
+                            : 'bg-info-light text-info'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">{u.registeredAt}</td>
+                      <td className="px-4 py-3 text-right text-text">{u.orders}</td>
+                      <td className="px-4 py-3 text-right text-text">¥{u.totalSpent.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
+                          u.status === '正常'
+                            ? 'bg-success-light text-success'
+                            : 'bg-danger-light text-danger'
+                        }`}>
+                          {u.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button className="px-2 py-1 text-xs text-accent hover:bg-accent-light rounded-[--radius-sm] transition-colors">查看</button>
+                          <button className={`px-2 py-1 text-xs rounded-[--radius-sm] transition-colors ${
+                            u.status === '正常'
+                              ? 'text-danger hover:bg-danger-light'
+                              : 'text-success hover:bg-success-light'
+                          }`}>
+                            {u.status === '正常' ? '封禁' : '解封'}
+                          </button>
+                          <button className="px-2 py-1 text-xs text-text-secondary hover:bg-hover rounded-[--radius-sm] transition-colors">标签</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

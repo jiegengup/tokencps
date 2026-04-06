@@ -2,8 +2,13 @@
 import { useEffect, useState } from 'react'
 import { Header } from '@/app/buy/components/Header'
 import { Modal } from '@shared/components/Modal'
-import { api } from '@/lib/consumer/mock-api'
 import type { Order } from '@shared/index'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 const statusMap: Record<string, { label: string; cls: string }> = {
   pending: { label: '待支付', cls: 'bg-warning/10 text-warning' },
@@ -25,7 +30,11 @@ export default function OrdersPage() {
     setTimeout(() => setToast(''), 3000)
   }
 
-  useEffect(() => { api.orders.list().then(o => { setOrders(o); setLoading(false) }) }, [])
+  useEffect(() => {
+    fetch('/api/orders', { headers: { 'Authorization': `Bearer ${getCookie('token')}` } })
+      .then(r => r.json())
+      .then(data => { if (data.success) setOrders(data.data.items || []); setLoading(false) })
+  }, [])
 
   return (
     <div className="min-h-screen bg-bg">

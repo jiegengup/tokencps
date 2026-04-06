@@ -1,6 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 type Status = 'pending' | 'approved' | 'rejected'
 
@@ -12,15 +18,6 @@ interface Withdrawal {
   appliedAt: string
   status: Status
 }
-
-const MOCK_DATA: Withdrawal[] = [
-  { id: 'W20260401001', promoter: '张三 (ID: 1023)', amount: 520.00, method: '支付宝', appliedAt: '2026-04-01 14:32', status: 'pending' },
-  { id: 'W20260401002', promoter: '李四 (ID: 1087)', amount: 1200.00, method: '银行卡', appliedAt: '2026-04-01 13:15', status: 'pending' },
-  { id: 'W20260401003', promoter: '王五 (ID: 1145)', amount: 300.00, method: '微信', appliedAt: '2026-04-01 11:08', status: 'pending' },
-  { id: 'W20260331004', promoter: '赵六 (ID: 1201)', amount: 850.00, method: '支付宝', appliedAt: '2026-03-31 18:45', status: 'approved' },
-  { id: 'W20260331005', promoter: '孙七 (ID: 1056)', amount: 2000.00, method: '银行卡', appliedAt: '2026-03-31 16:20', status: 'rejected' },
-  { id: 'W20260331006', promoter: '周八 (ID: 1312)', amount: 680.00, method: '微信', appliedAt: '2026-03-31 10:55', status: 'approved' },
-]
 
 const TABS: { key: Status | 'all'; label: string }[] = [
   { key: 'pending', label: '待审核' },
@@ -37,7 +34,17 @@ const STATUS_MAP: Record<Status, { label: string; cls: string }> = {
 
 export default function WithdrawalsPage() {
   const [tab, setTab] = useState<Status | 'all'>('pending')
-  const [data, setData] = useState<Withdrawal[]>(MOCK_DATA)
+  const [data, setData] = useState<Withdrawal[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/withdrawals', {
+      headers: { Authorization: 'Bearer ' + getCookie('token') },
+    })
+      .then(res => res.json())
+      .then(json => setData(json.data || json || []))
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = tab === 'all' ? data : data.filter(w => w.status === tab)
   const pendingCount = data.filter(w => w.status === 'pending').length
@@ -96,62 +103,66 @@ export default function WithdrawalsPage() {
 
       {/* Table */}
       <div className="bg-card border border-border-light rounded-[--radius-md] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-light bg-hover">
-              <th className="text-left px-4 py-3 font-medium text-text-secondary">申请ID</th>
-              <th className="text-left px-4 py-3 font-medium text-text-secondary">推广员</th>
-              <th className="text-right px-4 py-3 font-medium text-text-secondary">金额</th>
-              <th className="text-left px-4 py-3 font-medium text-text-secondary">提现方式</th>
-              <th className="text-left px-4 py-3 font-medium text-text-secondary">申请时间</th>
-              <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
-              <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="text-center py-12 text-text-tertiary">暂无数据</td>
+        {loading ? (
+          <div className="py-12 text-center text-text-tertiary">加载中...</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border-light bg-hover">
+                <th className="text-left px-4 py-3 font-medium text-text-secondary">申请ID</th>
+                <th className="text-left px-4 py-3 font-medium text-text-secondary">推广员</th>
+                <th className="text-right px-4 py-3 font-medium text-text-secondary">金额</th>
+                <th className="text-left px-4 py-3 font-medium text-text-secondary">提现方式</th>
+                <th className="text-left px-4 py-3 font-medium text-text-secondary">申请时间</th>
+                <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
+                <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
               </tr>
-            ) : (
-              filtered.map(w => {
-                const st = STATUS_MAP[w.status]
-                return (
-                  <tr key={w.id} className="border-b border-border-light last:border-0 hover:bg-hover transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-text-secondary">{w.id}</td>
-                    <td className="px-4 py-3 text-text">{w.promoter}</td>
-                    <td className="px-4 py-3 text-right font-medium text-text">¥{w.amount.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-text-secondary">{w.method}</td>
-                    <td className="px-4 py-3 text-text-tertiary text-xs">{w.appliedAt}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {w.status === 'pending' ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => handleAction(w.id, 'approved')}
-                            className="px-3 py-1 text-xs rounded-[6px] bg-success text-white hover:opacity-90 transition-opacity"
-                          >
-                            通过
-                          </button>
-                          <button
-                            onClick={() => handleAction(w.id, 'rejected')}
-                            className="px-3 py-1 text-xs rounded-[6px] bg-danger text-white hover:opacity-90 transition-opacity"
-                          >
-                            拒绝
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-text-tertiary">--</span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-text-tertiary">暂无数据</td>
+                </tr>
+              ) : (
+                filtered.map(w => {
+                  const st = STATUS_MAP[w.status]
+                  return (
+                    <tr key={w.id} className="border-b border-border-light last:border-0 hover:bg-hover transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-text-secondary">{w.id}</td>
+                      <td className="px-4 py-3 text-text">{w.promoter}</td>
+                      <td className="px-4 py-3 text-right font-medium text-text">¥{w.amount.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-text-secondary">{w.method}</td>
+                      <td className="px-4 py-3 text-text-tertiary text-xs">{w.appliedAt}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {w.status === 'pending' ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleAction(w.id, 'approved')}
+                              className="px-3 py-1 text-xs rounded-[6px] bg-success text-white hover:opacity-90 transition-opacity"
+                            >
+                              通过
+                            </button>
+                            <button
+                              onClick={() => handleAction(w.id, 'rejected')}
+                              className="px-3 py-1 text-xs rounded-[6px] bg-danger text-white hover:opacity-90 transition-opacity"
+                            >
+                              拒绝
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-text-tertiary">--</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )

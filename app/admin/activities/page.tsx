@@ -1,6 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 type Activity = {
   id: number
@@ -18,15 +24,6 @@ type Activity = {
 
 const SUPPLIERS = ['Anthropic', 'OpenAI', 'Google', 'DeepSeek', '字节跳动', '阿里云'] as const
 
-const MOCK_ACTIVITIES: Activity[] = [
-  { id: 1, name: 'Claude API推广', supplier: 'Anthropic', commission: '15', parentCommission: '5', description: 'Claude API套餐推广活动', online: true, participants: 1280, orders: 3456, status: '进行中', createdAt: '2026-03-01' },
-  { id: 2, name: 'GPT Plus推广', supplier: 'OpenAI', commission: '12', parentCommission: '4', description: 'GPT Plus账号推广', online: true, participants: 960, orders: 2180, status: '进行中', createdAt: '2026-02-15' },
-  { id: 3, name: 'Gemini Pro推广', supplier: 'Google', commission: '10', parentCommission: '3', description: 'Gemini Pro推广活动', online: false, participants: 540, orders: 1120, status: '已结束', createdAt: '2026-01-20' },
-  { id: 4, name: 'DeepSeek推广', supplier: 'DeepSeek', commission: '18', parentCommission: '6', description: 'DeepSeek模型推广', online: true, participants: 720, orders: 1890, status: '进行中', createdAt: '2026-03-10' },
-  { id: 5, name: '豆包推广', supplier: '字节跳动', commission: '14', parentCommission: '4', description: '豆包大模型推广', online: false, participants: 310, orders: 680, status: '草稿', createdAt: '2026-03-20' },
-  { id: 6, name: '通义千问推广', supplier: '阿里云', commission: '13', parentCommission: '4', description: '通义千问推广活动', online: false, participants: 450, orders: 920, status: '已结束', createdAt: '2025-12-05' },
-]
-
 const TABS = ['全部', '进行中', '已结束', '草稿'] as const
 
 type ModalForm = {
@@ -41,10 +38,20 @@ const emptyForm: ModalForm = { name: '', supplier: 'Anthropic', commission: '', 
 
 export default function ActivitiesPage() {
   const [activeTab, setActiveTab] = useState<string>('全部')
-  const [activities, setActivities] = useState<Activity[]>(MOCK_ACTIVITIES)
+  const [activities, setActivities] = useState<Activity[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState<ModalForm>(emptyForm)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/activities', {
+      headers: { Authorization: 'Bearer ' + getCookie('token') },
+    })
+      .then(res => res.json())
+      .then(json => setActivities(json.data || json || []))
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = activeTab === '全部' ? activities : activities.filter(a => a.status === activeTab)
 
@@ -98,6 +105,8 @@ export default function ActivitiesPage() {
     }
     return map[status]
   }
+
+  if (loading) return <div className="flex items-center justify-center py-24 text-text-tertiary">加载中...</div>
 
   return (
     <div className="space-y-6">

@@ -1,12 +1,17 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Header } from '@/app/buy/components/Header'
-import { api } from '@/lib/consumer/mock-api'
 import { toast } from '@shared/components/Toast'
 import { Modal } from '@shared/components/Modal'
 import type { APIKeyInfo } from '@shared/index'
 
-const API_ENDPOINT = 'https://api.tokencps.com/v1'
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
+
+const API_ENDPOINT = '/api/v1'
 
 export default function KeysPage() {
   const [keys, setKeys] = useState<APIKeyInfo[]>([])
@@ -17,31 +22,46 @@ export default function KeysPage() {
   const [showCode, setShowCode] = useState(false)
   const [codeTab, setCodeTab] = useState<'curl' | 'python' | 'nodejs'>('curl')
 
-  useEffect(() => { api.keys.list().then(k => { setKeys(k); setLoading(false) }) }, [])
+  const authHeaders = () => ({ 'Authorization': `Bearer ${getCookie('token')}`, 'Content-Type': 'application/json' })
+
+  useEffect(() => {
+    fetch('/api/keys', { headers: { 'Authorization': `Bearer ${getCookie('token')}` } })
+      .then(r => r.json())
+      .then(data => { if (data.success) setKeys(data.data); setLoading(false) })
+  }, [])
 
   const copy = (text: string, label: string) => { navigator.clipboard.writeText(text); toast(`${label}已复制`, 'success') }
 
   const handleCreate = async () => {
     setCreating(true)
     try {
-      const k = await api.keys.create(newName || undefined)
-      setKeys(prev => [...prev, k])
-      setShowCreate(false); setNewName('')
-      toast('Key 创建成功', 'success')
+      const res = await fetch('/api/keys/create', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ name: newName || undefined }) })
+      const data = await res.json()
+      if (data.success) {
+        setKeys(prev => [...prev, data.data])
+        setShowCreate(false); setNewName('')
+        toast('Key 创建成功', 'success')
+      } else { toast(data.message || '创建失败', 'error') }
     } catch { toast('创建失败', 'error') }
     finally { setCreating(false) }
   }
 
   const handleDelete = async (id: string) => {
-    await api.keys.delete(id)
-    setKeys(prev => prev.filter(k => k.id !== id))
-    toast('Key 已删除', 'success')
+    const res = await fetch(`/api/keys/${id}`, { method: 'DELETE', headers: authHeaders() })
+    const data = await res.json()
+    if (data.success) {
+      setKeys(prev => prev.filter(k => k.id !== id))
+      toast('Key 已删除', 'success')
+    } else { toast(data.message || '删除失败', 'error') }
   }
 
   const handleReset = async (id: string) => {
-    const updated = await api.keys.reset(id)
-    setKeys(prev => prev.map(k => k.id === id ? updated : k))
-    toast('Key 已重置', 'success')
+    const res = await fetch(`/api/keys/${id}/reset`, { method: 'POST', headers: authHeaders() })
+    const data = await res.json()
+    if (data.success) {
+      setKeys(prev => prev.map(k => k.id === id ? data.data : k))
+      toast('Key 已重置', 'success')
+    } else { toast(data.message || '重置失败', 'error') }
   }
 
   const codeExamples: Record<string, { label: string; code: string }> = {

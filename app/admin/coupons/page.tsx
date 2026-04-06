@@ -2,6 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
+
 type CouponType = '满减' | '折扣' | '固定金额'
 type CouponStatus = '生效中' | '已过期' | '未开始'
 
@@ -30,14 +36,6 @@ interface CreateForm {
   total: string
 }
 
-const MOCK_COUPONS: Coupon[] = [
-  { id: 'C1001', name: '新用户满减券', type: '满减', value: 20, condition: 100, conditionLabel: '满100可用', issued: 500, total: 1000, used: 320, startDate: '2026-03-01', endDate: '2026-06-30', status: '生效中' },
-  { id: 'C1002', name: '会员8折券', type: '折扣', value: 8, condition: 0, conditionLabel: '无门槛', issued: 300, total: 500, used: 210, startDate: '2026-02-01', endDate: '2026-04-30', status: '生效中' },
-  { id: 'C1003', name: '推广员专属减免', type: '固定金额', value: 15, condition: 0, conditionLabel: '推广员专享', issued: 200, total: 200, used: 180, startDate: '2025-12-01', endDate: '2026-02-28', status: '已过期' },
-  { id: 'C1004', name: '五一大促满减', type: '满减', value: 50, condition: 200, conditionLabel: '满200可用', issued: 0, total: 2000, used: 0, startDate: '2026-04-25', endDate: '2026-05-05', status: '未开始' },
-  { id: 'C1005', name: '限时9折券', type: '折扣', value: 9, condition: 50, conditionLabel: '满50可用', issued: 800, total: 1000, used: 650, startDate: '2026-01-15', endDate: '2026-03-15', status: '已过期' },
-]
-
 const EMPTY_FORM: CreateForm = { name: '', type: '满减', value: '', condition: '', startDate: '', endDate: '', total: '' }
 
 function formatValue(type: CouponType, value: number) {
@@ -64,11 +62,21 @@ const typeStyle = (type: CouponType) => {
 }
 
 export default function CouponsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>(MOCK_COUPONS)
+  const [coupons, setCoupons] = useState<Coupon[]>([])
   const [showCreate, setShowCreate] = useState(false)
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM)
   const [distDropdown, setDistDropdown] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const distRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/coupons', {
+      headers: { Authorization: 'Bearer ' + getCookie('token') },
+    })
+      .then(res => res.json())
+      .then(json => setCoupons(json.data || json || []))
+      .finally(() => setLoading(false))
+  }, [])
 
   const totalIssued = coupons.reduce((s, c) => s + c.issued, 0)
   const totalUsed = coupons.reduce((s, c) => s + c.used, 0)
@@ -85,22 +93,32 @@ export default function CouponsPage() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  function handleCreate() {
-    const newCoupon: Coupon = {
-      id: `C${Date.now()}`,
+  async function handleCreate() {
+    const body = {
       name: form.name,
       type: form.type,
       value: Number(form.value) || 0,
       condition: Number(form.condition) || 0,
       conditionLabel: Number(form.condition) > 0 ? `满${form.condition}可用` : '无门槛',
-      issued: 0,
       total: Number(form.total) || 0,
-      used: 0,
       startDate: form.startDate,
       endDate: form.endDate,
-      status: form.startDate > new Date().toISOString().slice(0, 10) ? '未开始' : '生效中',
     }
-    setCoupons([newCoupon, ...coupons])
+    try {
+      const res = await fetch('/api/admin/coupons', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + getCookie('token'),
+        },
+        body: JSON.stringify(body),
+      })
+      const json = await res.json()
+      if (res.ok) {
+        const newCoupon: Coupon = json.data || json
+        setCoupons(prev => [newCoupon, ...prev])
+      }
+    } catch {}
     setForm(EMPTY_FORM)
     setShowCreate(false)
   }
@@ -251,73 +269,77 @@ export default function CouponsPage() {
       {/* Table */}
       <div className="bg-card border border-border-light rounded-[--radius-md] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-light bg-bg-secondary/50">
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">名称</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">类型</th>
-                <th className="text-right px-4 py-3 font-medium text-text-secondary">面值</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">使用条件</th>
-                <th className="text-right px-4 py-3 font-medium text-text-secondary">已发放/总量</th>
-                <th className="text-right px-4 py-3 font-medium text-text-secondary">已使用</th>
-                <th className="text-left px-4 py-3 font-medium text-text-secondary">有效期</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
-                <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coupons.map((c) => (
-                <tr key={c.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
-                  <td className="px-4 py-3 text-text font-medium">{c.name}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${typeStyle(c.type)}`}>{c.type}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-text">{formatValue(c.type, c.value)}</td>
-                  <td className="px-4 py-3 text-text-secondary">{c.conditionLabel}</td>
-                  <td className="px-4 py-3 text-right text-text">{c.issued}/{c.total}</td>
-                  <td className="px-4 py-3 text-right text-text">{c.used}</td>
-                  <td className="px-4 py-3 text-text-secondary text-xs">{c.startDate} ~ {c.endDate}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${statusStyle(c.status)}`}>{c.status}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button className="px-2 py-1 text-xs text-accent hover:bg-accent-light rounded-[--radius-sm] transition-colors">编辑</button>
-                      {c.status !== '已过期' && (
-                        <div className="relative" ref={distDropdown === c.id ? distRef : undefined}>
-                          <button
-                            onClick={() => setDistDropdown(distDropdown === c.id ? null : c.id)}
-                            className="px-2 py-1 text-xs text-success hover:bg-success-light rounded-[--radius-sm] transition-colors"
-                          >
-                            发放
-                          </button>
-                          {distDropdown === c.id && (
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-card border border-border-light rounded-[--radius-sm] shadow-lg z-10 overflow-hidden">
-                              <button
-                                onClick={() => handleDistribute(c.id, '全员发放')}
-                                className="w-full text-left px-3 py-2 text-sm text-text hover:bg-hover transition-colors"
-                              >
-                                全员发放
-                              </button>
-                              <button
-                                onClick={() => handleDistribute(c.id, '指定推广员客户发放')}
-                                className="w-full text-left px-3 py-2 text-sm text-text hover:bg-hover transition-colors border-t border-border-light"
-                              >
-                                指定推广员客户
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {c.status !== '已过期' && (
-                        <button className="px-2 py-1 text-xs text-danger hover:bg-danger-light rounded-[--radius-sm] transition-colors">停用</button>
-                      )}
-                    </div>
-                  </td>
+          {loading ? (
+            <div className="py-12 text-center text-text-tertiary">加载中...</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-light bg-bg-secondary/50">
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">名称</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">类型</th>
+                  <th className="text-right px-4 py-3 font-medium text-text-secondary">面值</th>
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">使用条件</th>
+                  <th className="text-right px-4 py-3 font-medium text-text-secondary">已发放/总量</th>
+                  <th className="text-right px-4 py-3 font-medium text-text-secondary">已使用</th>
+                  <th className="text-left px-4 py-3 font-medium text-text-secondary">有效期</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">状态</th>
+                  <th className="text-center px-4 py-3 font-medium text-text-secondary">操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {coupons.map((c) => (
+                  <tr key={c.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
+                    <td className="px-4 py-3 text-text font-medium">{c.name}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${typeStyle(c.type)}`}>{c.type}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-text">{formatValue(c.type, c.value)}</td>
+                    <td className="px-4 py-3 text-text-secondary">{c.conditionLabel}</td>
+                    <td className="px-4 py-3 text-right text-text">{c.issued}/{c.total}</td>
+                    <td className="px-4 py-3 text-right text-text">{c.used}</td>
+                    <td className="px-4 py-3 text-text-secondary text-xs">{c.startDate} ~ {c.endDate}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${statusStyle(c.status)}`}>{c.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button className="px-2 py-1 text-xs text-accent hover:bg-accent-light rounded-[--radius-sm] transition-colors">编辑</button>
+                        {c.status !== '已过期' && (
+                          <div className="relative" ref={distDropdown === c.id ? distRef : undefined}>
+                            <button
+                              onClick={() => setDistDropdown(distDropdown === c.id ? null : c.id)}
+                              className="px-2 py-1 text-xs text-success hover:bg-success-light rounded-[--radius-sm] transition-colors"
+                            >
+                              发放
+                            </button>
+                            {distDropdown === c.id && (
+                              <div className="absolute right-0 top-full mt-1 w-40 bg-card border border-border-light rounded-[--radius-sm] shadow-lg z-10 overflow-hidden">
+                                <button
+                                  onClick={() => handleDistribute(c.id, '全员发放')}
+                                  className="w-full text-left px-3 py-2 text-sm text-text hover:bg-hover transition-colors"
+                                >
+                                  全员发放
+                                </button>
+                                <button
+                                  onClick={() => handleDistribute(c.id, '指定推广员客户发放')}
+                                  className="w-full text-left px-3 py-2 text-sm text-text hover:bg-hover transition-colors border-t border-border-light"
+                                >
+                                  指定推广员客户
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {c.status !== '已过期' && (
+                          <button className="px-2 py-1 text-xs text-danger hover:bg-danger-light rounded-[--radius-sm] transition-colors">停用</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

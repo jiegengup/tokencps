@@ -1,6 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return ""
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+  return match ? match[2] : ""
+}
 
 type RiskLevel = '高' | '中' | '低'
 type AlertStatus = '待处理' | '已处理'
@@ -22,22 +28,6 @@ interface RiskAlert {
   status: AlertStatus
 }
 
-const DEFAULT_RULES: RiskRule[] = [
-  { key: 'ip_register', label: '同IP多注册阈值', description: '同一IP在24小时内注册账号数超过该值触发告警', value: 5, unit: '个' },
-  { key: 'large_order', label: '大额订单告警阈值', description: '单笔订单金额超过该值触发告警', value: 10000, unit: '元' },
-  { key: 'refund_rate', label: '高退款率阈值', description: '推广员关联订单退款率超过该值触发告警', value: 30, unit: '%' },
-  { key: 'promoter_anomaly', label: '推广员异常检测', description: '推广员短时间内产生异常大量订单触发告警', value: 50, unit: '单/小时' },
-]
-
-const MOCK_ALERTS: RiskAlert[] = [
-  { id: 'RA001', type: '同IP多注册', description: 'IP 192.168.1.100 在2小时内注册了8个账号', level: '高', time: '2026-04-02 09:15', status: '待处理' },
-  { id: 'RA002', type: '大额订单', description: '订单 #ORD20260402003 金额 ¥25,000，超出阈值', level: '中', time: '2026-04-02 08:42', status: '待处理' },
-  { id: 'RA003', type: '高退款率', description: '推广员 张三(ID:1023) 近7日退款率达 42%', level: '高', time: '2026-04-01 22:30', status: '待处理' },
-  { id: 'RA004', type: '推广员异常', description: '推广员 李四(ID:1087) 1小时内产生 78 笔订单', level: '高', time: '2026-04-01 18:05', status: '已处理' },
-  { id: 'RA005', type: '大额订单', description: '订单 #ORD20260401021 金额 ¥15,800，超出阈值', level: '低', time: '2026-04-01 14:20', status: '已处理' },
-  { id: 'RA006', type: '同IP多注册', description: 'IP 10.0.0.55 在6小时内注册了6个账号', level: '中', time: '2026-04-01 10:48', status: '已处理' },
-]
-
 const LEVEL_STYLE: Record<RiskLevel, string> = {
   '高': 'bg-danger-light text-danger',
   '中': 'bg-warning-light text-warning',
@@ -50,8 +40,21 @@ const STATUS_STYLE: Record<AlertStatus, string> = {
 }
 
 export default function RiskPage() {
-  const [rules, setRules] = useState<RiskRule[]>(DEFAULT_RULES)
-  const [alerts, setAlerts] = useState<RiskAlert[]>(MOCK_ALERTS)
+  const [rules, setRules] = useState<RiskRule[]>([])
+  const [alerts, setAlerts] = useState<RiskAlert[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/risk', {
+      headers: { Authorization: 'Bearer ' + getCookie('token') },
+    })
+      .then(res => res.json())
+      .then(json => {
+        setRules(json.rules || json.data?.rules || [])
+        setAlerts(json.alerts || json.data?.alerts || [])
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   const pendingCount = alerts.filter(a => a.status === '待处理').length
 
@@ -62,6 +65,8 @@ export default function RiskPage() {
   function handleAlert(id: string) {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: '已处理' } : a))
   }
+
+  if (loading) return <div className="flex items-center justify-center py-24 text-text-tertiary">加载中...</div>
 
   return (
     <div className="space-y-6">
@@ -117,31 +122,37 @@ export default function RiskPage() {
               </tr>
             </thead>
             <tbody>
-              {alerts.map(a => (
-                <tr key={a.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
-                  <td className="px-4 py-3 text-text font-medium whitespace-nowrap">{a.type}</td>
-                  <td className="px-4 py-3 text-text-secondary max-w-xs">{a.description}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${LEVEL_STYLE[a.level]}`}>{a.level}</span>
-                  </td>
-                  <td className="px-4 py-3 text-text-tertiary text-xs whitespace-nowrap">{a.time}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${STATUS_STYLE[a.status]}`}>{a.status}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    {a.status === '待处理' ? (
-                      <button
-                        onClick={() => handleAlert(a.id)}
-                        className="px-3 py-1 text-xs rounded-[6px] bg-accent text-white hover:opacity-90 transition-opacity"
-                      >
-                        处理
-                      </button>
-                    ) : (
-                      <span className="text-xs text-text-tertiary">--</span>
-                    )}
-                  </td>
+              {alerts.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-text-tertiary">暂无告警</td>
                 </tr>
-              ))}
+              ) : (
+                alerts.map(a => (
+                  <tr key={a.id} className="border-b border-border-light last:border-b-0 hover:bg-hover transition-colors">
+                    <td className="px-4 py-3 text-text font-medium whitespace-nowrap">{a.type}</td>
+                    <td className="px-4 py-3 text-text-secondary max-w-xs">{a.description}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${LEVEL_STYLE[a.level]}`}>{a.level}</span>
+                    </td>
+                    <td className="px-4 py-3 text-text-tertiary text-xs whitespace-nowrap">{a.time}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${STATUS_STYLE[a.status]}`}>{a.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {a.status === '待处理' ? (
+                        <button
+                          onClick={() => handleAlert(a.id)}
+                          className="px-3 py-1 text-xs rounded-[6px] bg-accent text-white hover:opacity-90 transition-opacity"
+                        >
+                          处理
+                        </button>
+                      ) : (
+                        <span className="text-xs text-text-tertiary">--</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
