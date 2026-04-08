@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       phone: '13800138000',
       email: 'demo@tokencps.com',
       password: await bcrypt.hash('demo123', 10), // demo123
-      nickname: '推广达人',
-      role: 'user' as const,
+      nickname: '管理员',
+      role: 'admin' as const,
       status: 'active' as const,
       inviteCode: 'DEMO001',
       balance: 1580.50,
